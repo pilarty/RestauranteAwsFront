@@ -1,21 +1,21 @@
-import { Outlet, NavLink, useLocation } from "react-router";
-import { 
-  LayoutDashboard, 
-  CalendarDays, 
-  Settings,
+import {
   Bell,
+  CalendarDays,
+  LayoutDashboard,
+  Settings,
   UserCircle
 } from "lucide-react";
 import { motion } from "motion/react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 
 export function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { icon: LayoutDashboard, label: "Floor Map", path: "/" },
     { icon: CalendarDays, label: "Reservations", path: "/reservations" },
     { icon: Settings, label: "Settings", path: "/settings" },
-    { icon: UserCircle, label: "Customer View", path: "/book" },
   ];
 
   return (
@@ -60,6 +60,13 @@ export function Layout() {
               </NavLink>
             );
           })}
+
+          <button
+            onClick={() => navigate("/pagina-restaurante")}
+            className="mt-3 px-4 py-2 bg-[#D4AF37] text-[#4A3B32] font-semibold uppercase tracking-widest text-xs rounded-sm shadow-sm hover:bg-[#b88e20] transition-colors"
+          >
+            Modo comensal
+          </button>
         </div>
 
         <div className="p-4 border-t border-[#E8E1D5] bg-[#FCFBF8]/50">

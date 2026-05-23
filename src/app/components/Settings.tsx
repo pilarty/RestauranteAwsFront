@@ -1,9 +1,11 @@
+import { Bell, Paintbrush, Shield, User } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
-import { User, Bell, Shield, Paintbrush, LogOut } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
+  const navigate = useNavigate();
 
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
@@ -56,6 +58,7 @@ export function Settings() {
                   <button className="mt-2 text-xs uppercase tracking-widest text-[#D4AF37] hover:text-[#C5A028] font-bold transition-colors">
                     Change Avatar
                   </button>
+                  
                 </div>
               </div>
 

@@ -1,6 +1,6 @@
+import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Mail, MapPin, MessageSquare, Phone, Sparkles, User, Users } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { Calendar, Clock, Users, User, Mail, Phone, MessageSquare, ChevronRight, Sparkles, MapPin, Check, ArrowLeft } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 
 export function Reservation() {
   const [step, setStep] = useState(1);
@@ -8,15 +8,18 @@ export function Reservation() {
     date: "",
     time: "",
     guests: 2,
+    dni: "",
     name: "",
     email: "",
     phone: "",
-    occasion: "",
+    motivoVisita: "Negocios",
+    restriccionAlimentaria: "Ninguna",
     specialRequests: "",
     seatingPreference: "indoor",
   });
 
-  const occasions = ["Casual Dining", "Birthday", "Anniversary", "Business", "Date Night", "Celebration"];
+  const motivos = ["Negocios", "Cena casual", "Cumpleaños", "Aniversario", "Noche romántica", "Celebración"];
+  const restricciones = ["Ninguna", "Vegetariana", "Vegana", "Sin gluten", "Sin lactosa", "Alergia a frutos secos"];
   const timeSlots = ["17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30"];
   const guestOptions = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -26,12 +29,12 @@ export function Reservation() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Reservation submitted:", formData);
+    console.log("Reserva enviada:", formData);
     setStep(4);
   };
 
   const isStep1Valid = formData.date && formData.time && formData.guests;
-  const isStep2Valid = formData.name && formData.email && formData.phone;
+  const isStep2Valid = formData.dni && formData.name && formData.email && formData.phone;
 
   return (
     <div 
@@ -56,10 +59,10 @@ export function Reservation() {
               BellaVista
             </h2>
             <h1 className="text-3xl md:text-4xl font-serif text-[#4A3B32] mb-4">
-              Reserve Your Table
+              Reserva tu mesa
             </h1>
             <p className="text-[#8C7A6B] font-light text-sm md:text-base max-w-sm mx-auto">
-              Experience authentic flavors and exceptional service in an elegant setting.
+              Disfruta sabores auténticos y un servicio excepcional en un ambiente elegante.
             </p>
           </motion.div>
 
@@ -96,7 +99,7 @@ export function Reservation() {
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-[#D4AF37]" />
-                      Select Date
+                      Fecha
                     </label>
                     <input
                       type="date"
@@ -110,7 +113,7 @@ export function Reservation() {
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <Clock className="w-4 h-4 text-[#D4AF37]" />
-                      Select Time
+                      Hora
                     </label>
                     <div className="grid grid-cols-4 md:grid-cols-5 gap-2 md:gap-3">
                       {timeSlots.map((time) => (
@@ -133,7 +136,7 @@ export function Reservation() {
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <Users className="w-4 h-4 text-[#D4AF37]" />
-                      Party Size
+                      Comensales
                     </label>
                     <div className="grid grid-cols-4 md:grid-cols-8 gap-2 md:gap-3">
                       {guestOptions.map((num) => (
@@ -151,7 +154,7 @@ export function Reservation() {
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-[#8C7A6B] mt-3 italic">For parties larger than 8, please contact us directly.</p>
+                    <p className="text-xs text-[#8C7A6B] mt-3 italic">Para grupos mayores a 8, por favor contáctanos directamente.</p>
                   </div>
 
                   <div className="pt-4">
@@ -161,7 +164,7 @@ export function Reservation() {
                       disabled={!isStep1Valid}
                       className="w-full bg-[#D4AF37] hover:bg-[#C5A028] disabled:bg-[#E8E1D5] disabled:text-[#A89F91] text-white px-6 py-4 rounded-sm font-semibold tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2"
                     >
-                      Continue
+                      Continuar
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -181,13 +184,27 @@ export function Reservation() {
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <User className="w-4 h-4 text-[#D4AF37]" />
-                      Full Name
+                      DNI
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.dni}
+                      onChange={(e) => updateField("dni", e.target.value)}
+                      placeholder="Número de documento"
+                      className="w-full bg-white border border-[#E8E1D5] rounded-sm px-4 py-3.5 text-[#4A3B32] placeholder:text-[#C4BCB3] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
+                      <User className="w-4 h-4 text-[#D4AF37]" />
+                      Nombre completo
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => updateField("name", e.target.value)}
-                      placeholder="Jane Doe"
+                      placeholder="Nombre completo"
                       className="w-full bg-white border border-[#E8E1D5] rounded-sm px-4 py-3.5 text-[#4A3B32] placeholder:text-[#C4BCB3] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
                     />
                   </div>
@@ -195,13 +212,13 @@ export function Reservation() {
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <Mail className="w-4 h-4 text-[#D4AF37]" />
-                      Email Address
+                      Correo electrónico
                     </label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => updateField("email", e.target.value)}
-                      placeholder="jane@example.com"
+                      placeholder="correo@ejemplo.com"
                       className="w-full bg-white border border-[#E8E1D5] rounded-sm px-4 py-3.5 text-[#4A3B32] placeholder:text-[#C4BCB3] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
                     />
                   </div>
@@ -209,13 +226,13 @@ export function Reservation() {
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <Phone className="w-4 h-4 text-[#D4AF37]" />
-                      Phone Number
+                      Teléfono
                     </label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => updateField("phone", e.target.value)}
-                      placeholder="+1 (555) 000-0000"
+                      placeholder="+57 300 000 0000"
                       className="w-full bg-white border border-[#E8E1D5] rounded-sm px-4 py-3.5 text-[#4A3B32] placeholder:text-[#C4BCB3] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
                     />
                   </div>
@@ -227,7 +244,7 @@ export function Reservation() {
                       className="w-14 md:w-auto md:px-6 flex items-center justify-center bg-transparent border border-[#E8E1D5] text-[#8C7A6B] hover:text-[#4A3B32] hover:border-[#4A3B32] py-4 rounded-sm transition-all"
                     >
                       <ArrowLeft className="w-4 h-4" />
-                      <span className="hidden md:inline ml-2 text-xs font-semibold tracking-widest uppercase">Back</span>
+                      <span className="hidden md:inline ml-2 text-xs font-semibold tracking-widest uppercase">Atrás</span>
                     </button>
                     <button
                       type="button"
@@ -235,7 +252,7 @@ export function Reservation() {
                       disabled={!isStep2Valid}
                       className="flex-1 bg-[#D4AF37] hover:bg-[#C5A028] disabled:bg-[#E8E1D5] disabled:text-[#A89F91] text-white px-6 py-4 rounded-sm font-semibold tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2"
                     >
-                      Continue
+                      Continuar
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -255,21 +272,21 @@ export function Reservation() {
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                      Occasion (Optional)
+                      Motivo de visita
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
-                      {occasions.map((occ) => (
+                      {motivos.map((motivo) => (
                         <button
-                          key={occ}
+                          key={motivo}
                           type="button"
-                          onClick={() => updateField("occasion", formData.occasion === occ ? "" : occ)}
+                          onClick={() => updateField("motivoVisita", motivo)}
                           className={`py-3 px-4 rounded-sm text-sm transition-all border ${
-                            formData.occasion === occ
+                            formData.motivoVisita === motivo
                               ? 'bg-[#4A3B32] text-[#D4AF37] border-[#4A3B32] shadow-md'
                               : 'bg-white text-[#8C7A6B] border-[#E8E1D5] hover:border-[#D4AF37] hover:text-[#4A3B32]'
                           }`}
                         >
-                          {occ}
+                          {motivo}
                         </button>
                       ))}
                     </div>
@@ -277,8 +294,24 @@ export function Reservation() {
 
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                      Restricción alimentaria
+                    </label>
+                    <select
+                      value={formData.restriccionAlimentaria}
+                      onChange={(e) => updateField("restriccionAlimentaria", e.target.value)}
+                      className="w-full bg-white border border-[#E8E1D5] rounded-sm px-4 py-3.5 text-[#4A3B32] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
+                    >
+                      {restricciones.map((restriccion) => (
+                        <option key={restriccion} value={restriccion}>{restriccion}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                      Seating Preference
+                      Preferencia de mesa
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
@@ -290,7 +323,7 @@ export function Reservation() {
                             : 'bg-white text-[#8C7A6B] border-[#E8E1D5] hover:border-[#D4AF37] hover:text-[#4A3B32]'
                         }`}
                       >
-                        Indoor Dining
+                        Interior
                       </button>
                       <button
                         type="button"
@@ -301,7 +334,7 @@ export function Reservation() {
                             : 'bg-white text-[#8C7A6B] border-[#E8E1D5] hover:border-[#D4AF37] hover:text-[#4A3B32]'
                         }`}
                       >
-                        Outdoor Terrace
+                        Terraza
                       </button>
                     </div>
                   </div>
@@ -309,12 +342,12 @@ export function Reservation() {
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-[#D4AF37]" />
-                      Special Requests
+                      Solicitudes especiales
                     </label>
                     <textarea
                       value={formData.specialRequests}
                       onChange={(e) => updateField("specialRequests", e.target.value)}
-                      placeholder="Dietary requirements, accessibility needs, allergies, etc."
+                      placeholder="Requerimientos dietéticos, necesidades de accesibilidad, alergias, etc."
                       rows={4}
                       className="w-full bg-white border border-[#E8E1D5] rounded-sm px-4 py-3.5 text-[#4A3B32] placeholder:text-[#C4BCB3] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all resize-none"
                     />
@@ -327,13 +360,13 @@ export function Reservation() {
                       className="w-14 md:w-auto md:px-6 flex items-center justify-center bg-transparent border border-[#E8E1D5] text-[#8C7A6B] hover:text-[#4A3B32] hover:border-[#4A3B32] py-4 rounded-sm transition-all"
                     >
                       <ArrowLeft className="w-4 h-4" />
-                      <span className="hidden md:inline ml-2 text-xs font-semibold tracking-widest uppercase">Back</span>
+                      <span className="hidden md:inline ml-2 text-xs font-semibold tracking-widest uppercase">Atrás</span>
                     </button>
                     <button
                       type="submit"
                       className="flex-1 bg-[#4A3B32] hover:bg-[#322721] text-[#D4AF37] px-6 py-4 rounded-sm font-semibold tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#4A3B32]/20"
                     >
-                      Confirm Booking
+                      Confirmar reserva
                       <Check className="w-4 h-4" />
                     </button>
                   </div>
@@ -353,9 +386,9 @@ export function Reservation() {
                     <Check className="w-8 h-8 text-[#D4AF37]" />
                   </div>
 
-                  <h2 className="text-3xl font-serif text-[#4A3B32] mb-3">Reservation Confirmed</h2>
+                  <h2 className="text-3xl font-serif text-[#4A3B32] mb-3">Reserva confirmada</h2>
                   <p className="text-[#8C7A6B] mb-8 max-w-sm mx-auto">
-                    We look forward to hosting you. A confirmation email has been sent to <span className="text-[#4A3B32] font-medium">{formData.email}</span>.
+                    Gracias por reservar. Hemos enviado un correo de confirmación a <span className="text-[#4A3B32] font-medium">{formData.email}</span>.
                   </p>
 
                   <div className="bg-white border border-[#E8E1D5] rounded-sm p-6 md:p-8 text-left mb-8 max-w-md mx-auto relative">
@@ -365,12 +398,12 @@ export function Reservation() {
                     <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-[#D4AF37] m-1.5"></div>
                     <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#D4AF37] m-1.5"></div>
 
-                    <h3 className="text-xs font-semibold text-[#8C7A6B] mb-5 uppercase tracking-widest border-b border-[#E8E1D5] pb-3">Reservation Details</h3>
+                    <h3 className="text-xs font-semibold text-[#8C7A6B] mb-5 uppercase tracking-widest border-b border-[#E8E1D5] pb-3">Detalles de la reserva</h3>
                     <div className="space-y-4">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-[#8C7A6B]">Date</span>
+                        <span className="text-[#8C7A6B]">Fecha</span>
                         <span className="text-[#4A3B32] font-medium">
-                          {formData.date ? new Date(formData.date).toLocaleDateString('en-US', {
+                          {formData.date ? new Date(formData.date).toLocaleDateString('es-ES', {
                             weekday: 'short',
                             year: 'numeric',
                             month: 'long',
@@ -379,27 +412,37 @@ export function Reservation() {
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-[#8C7A6B]">Time</span>
+                        <span className="text-[#8C7A6B]">Hora</span>
                         <span className="text-[#4A3B32] font-medium">{formData.time}</span>
                       </div>
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-[#8C7A6B]">Guests</span>
-                        <span className="text-[#4A3B32] font-medium">{formData.guests} people</span>
+                        <span className="text-[#8C7A6B]">Comensales</span>
+                        <span className="text-[#4A3B32] font-medium">{formData.guests} personas</span>
                       </div>
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-[#8C7A6B]">Name</span>
+                        <span className="text-[#8C7A6B]">DNI</span>
+                        <span className="text-[#4A3B32] font-medium">{formData.dni}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-[#8C7A6B]">Nombre</span>
                         <span className="text-[#4A3B32] font-medium">{formData.name}</span>
                       </div>
-                      {formData.occasion && (
+                      {formData.motivoVisita && (
                         <div className="flex justify-between items-center text-sm">
-                          <span className="text-[#8C7A6B]">Occasion</span>
-                          <span className="text-[#D4AF37] font-medium">{formData.occasion}</span>
+                          <span className="text-[#8C7A6B]">Motivo de visita</span>
+                          <span className="text-[#D4AF37] font-medium">{formData.motivoVisita}</span>
+                        </div>
+                      )}
+                      {formData.restriccionAlimentaria && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-[#8C7A6B]">Restricción alimentaria</span>
+                          <span className="text-[#4A3B32] font-medium">{formData.restriccionAlimentaria}</span>
                         </div>
                       )}
                       {formData.seatingPreference && (
                         <div className="flex justify-between items-center text-sm">
-                          <span className="text-[#8C7A6B]">Seating</span>
-                          <span className="text-[#4A3B32] font-medium capitalize">{formData.seatingPreference}</span>
+                          <span className="text-[#8C7A6B]">Ubicación</span>
+                          <span className="text-[#4A3B32] font-medium capitalize">{formData.seatingPreference === 'indoor' ? 'Interior' : 'Terraza'}</span>
                         </div>
                       )}
                     </div>
@@ -410,7 +453,7 @@ export function Reservation() {
                       href="/"
                       className="flex-1 bg-transparent border border-[#E8E1D5] text-[#4A3B32] hover:bg-[#E8E1D5]/30 px-6 py-4 rounded-sm font-semibold tracking-widest uppercase text-xs transition-all inline-block text-center"
                     >
-                      Return Home
+                      Volver al inicio
                     </a>
                     <button
                       type="button"
@@ -420,17 +463,19 @@ export function Reservation() {
                           date: "",
                           time: "",
                           guests: 2,
+                          dni: "",
                           name: "",
                           email: "",
                           phone: "",
-                          occasion: "",
+                          motivoVisita: "Negocios",
+                          restriccionAlimentaria: "Ninguna",
                           specialRequests: "",
                           seatingPreference: "indoor",
                         });
                       }}
                       className="flex-1 bg-[#D4AF37] hover:bg-[#C5A028] text-white px-6 py-4 rounded-sm font-semibold tracking-widest uppercase text-xs transition-all text-center shadow-lg shadow-[#D4AF37]/20"
                     >
-                      New Booking
+                      Nueva reserva
                     </button>
                   </div>
                 </motion.div>

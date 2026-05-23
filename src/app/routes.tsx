@@ -1,11 +1,12 @@
 import { createBrowserRouter, useRouteError } from "react-router";
-import { Layout } from "./components/Layout";
-import { TableMap } from "./components/TableMap";
-import { Reservations } from "./components/Reservations";
-import { TableDetails } from "./components/TableDetails";
 import { CustomerSurvey } from "./components/CustomerSurvey";
-import { Settings } from "./components/Settings";
+import { Layout } from "./components/Layout";
+import { PaginaRestaurante } from "./components/PaginaRestaurante";
 import { Reservation } from "./components/Reservation";
+import { Reservations } from "./components/Reservations";
+import { Settings } from "./components/Settings";
+import { TableDetails } from "./components/TableDetails";
+import { TableMap } from "./components/TableMap";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -33,6 +34,16 @@ export const router = createBrowserRouter([
       { path: "table/:id", Component: TableDetails },
       { path: "settings", Component: Settings },
     ],
+  },
+  {
+    path: "/realizar-reserva",
+    Component: Reservation,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/pagina-restaurante",
+    Component: PaginaRestaurante,
+    errorElement: <ErrorBoundary />,
   },
   {
     path: "/survey/:tableId",
