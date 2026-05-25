@@ -13,9 +13,9 @@ export function Layout() {
   const navigate = useNavigate();
 
   const navItems = [
-    { icon: LayoutDashboard, label: "Floor Map", path: "/" },
-    { icon: CalendarDays, label: "Reservations", path: "/reservations" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: LayoutDashboard, label: "Mapa del local", path: "/" },
+    { icon: CalendarDays, label: "Reservas", path: "/reservations" },
+    { icon: Settings, label: "Configuración", path: "/settings" },
   ];
 
   return (
@@ -33,14 +33,17 @@ export function Layout() {
 
         <div className="flex-1 py-8 flex flex-col gap-2 px-4">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (item.path !== "/" && location.pathname.startsWith(item.path));
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== "/" && location.pathname.startsWith(item.path));
+
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
                 className={`relative flex items-center px-3 py-3 md:px-4 md:py-3 rounded-sm transition-all duration-200 group ${
-                  isActive 
-                    ? "text-[#4A3B32]" 
+                  isActive
+                    ? "text-[#4A3B32]"
                     : "text-[#8C7A6B] hover:text-[#4A3B32] hover:bg-[#F0EBE1]/50"
                 }`}
               >
@@ -52,11 +55,15 @@ export function Layout() {
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}
-                <item.icon 
-                  className={`w-5 h-5 md:mr-3 relative z-10 mx-auto md:mx-0 ${isActive ? 'text-[#D4AF37]' : ''}`} 
-                  strokeWidth={isActive ? 2 : 1.5} 
+                <item.icon
+                  className={`w-5 h-5 md:mr-3 relative z-10 mx-auto md:mx-0 ${
+                    isActive ? "text-[#D4AF37]" : ""
+                  }`}
+                  strokeWidth={isActive ? 2 : 1.5}
                 />
-                <span className="relative z-10 hidden md:block font-medium text-sm tracking-wide">{item.label}</span>
+                <span className="relative z-10 hidden md:block font-medium text-sm tracking-wide">
+                  {item.label}
+                </span>
               </NavLink>
             );
           })}
@@ -73,8 +80,8 @@ export function Layout() {
           <button className="w-full flex items-center justify-center md:justify-start px-3 py-2 md:px-4 md:py-3 rounded-sm text-[#8C7A6B] hover:text-[#4A3B32] hover:bg-[#F0EBE1] transition-colors">
             <UserCircle className="w-6 h-6 md:mr-3 text-[#D4AF37]" strokeWidth={1.5} />
             <div className="hidden md:flex flex-col items-start">
-              <span className="text-sm font-semibold text-[#4A3B32]">Alex Waiter</span>
-              <span className="text-xs text-[#8C7A6B]">Shift: 14:00 - 22:00</span>
+              <span className="text-sm font-semibold text-[#4A3B32]">Alex Camarero</span>
+              <span className="text-xs text-[#8C7A6B]">Turno: 14:00 - 22:00</span>
             </div>
           </button>
         </div>
@@ -88,10 +95,20 @@ export function Layout() {
               <Bell className="w-5 h-5" strokeWidth={1.5} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#D4AF37] rounded-full ring-2 ring-white" />
             </button>
+
             <div className="h-8 w-px bg-[#E8E1D5]" />
+
             <div className="text-right hidden sm:block">
-              <div className="text-sm font-semibold text-[#4A3B32] uppercase tracking-wider">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-              <div className="text-xs text-[#8C7A6B]">{new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric'})}</div>
+              <div className="text-sm font-semibold text-[#4A3B32] uppercase tracking-wider">
+                {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </div>
+              <div className="text-xs text-[#8C7A6B]">
+                {new Date().toLocaleDateString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric"
+                })}
+              </div>
             </div>
           </div>
         </header>

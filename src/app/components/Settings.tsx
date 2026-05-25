@@ -8,17 +8,19 @@ export function Settings() {
   const navigate = useNavigate();
 
   const tabs = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "security", label: "Security", icon: Shield },
-    { id: "appearance", label: "Appearance", icon: Paintbrush },
+    { id: "profile", label: "Perfil", icon: User },
+    { id: "notifications", label: "Notificaciones", icon: Bell },
+    { id: "security", label: "Seguridad", icon: Shield },
+    { id: "appearance", label: "Apariencia", icon: Paintbrush },
   ];
 
   return (
     <div className="max-w-4xl mx-auto h-full flex flex-col">
       <div className="mb-8 border-b border-[#E8E1D5] pb-6">
-        <h1 className="text-3xl font-serif text-[#4A3B32]">Settings</h1>
-        <p className="text-[#8C7A6B] mt-2 text-sm">Manage your account and preferences</p>
+        <h1 className="text-3xl font-serif text-[#4A3B32]">Configuración</h1>
+        <p className="text-[#8C7A6B] mt-2 text-sm">
+          Gestiona tu cuenta y preferencias
+        </p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 flex-1">
@@ -42,47 +44,62 @@ export function Settings() {
           </nav>
         </aside>
 
-        {/* Content */}
+        {/* Contenido */}
         <main className="flex-1 bg-white border border-[#E8E1D5] shadow-sm rounded-sm p-6 md:p-10">
           {activeTab === "profile" && (
             <div className="space-y-8">
-              <h2 className="text-xl font-serif text-[#4A3B32]">Profile Information</h2>
-              
+              <h2 className="text-xl font-serif text-[#4A3B32]">
+                Información del perfil
+              </h2>
+
               <div className="flex items-center gap-6 pb-8 border-b border-[#E8E1D5]">
                 <div className="w-20 h-20 rounded-sm bg-[#FCFBF8] border border-[#E8E1D5] flex items-center justify-center text-2xl font-serif font-bold text-[#4A3B32] shadow-sm">
                   AW
                 </div>
+
                 <div>
-                  <h3 className="text-lg font-semibold text-[#4A3B32]">Alex Waiter</h3>
-                  <p className="text-[#8C7A6B] text-sm font-medium">Senior Server</p>
+                  <h3 className="text-lg font-semibold text-[#4A3B32]">
+                    Alex Waiter
+                  </h3>
+                  <p className="text-[#8C7A6B] text-sm font-medium">
+                    Mozo senior
+                  </p>
+
                   <button className="mt-2 text-xs uppercase tracking-widest text-[#D4AF37] hover:text-[#C5A028] font-bold transition-colors">
-                    Change Avatar
+                    Cambiar avatar
                   </button>
-                  
                 </div>
               </div>
 
               <div className="grid gap-6 max-w-md">
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#8C7A6B]">Full Name</label>
-                  <input 
-                    type="text" 
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#8C7A6B]">
+                    Nombre completo
+                  </label>
+                  <input
+                    type="text"
                     defaultValue="Alex Waiter"
                     className="w-full bg-[#FCFBF8] border border-[#E8E1D5] rounded-sm px-4 py-2.5 text-[#4A3B32] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#8C7A6B]">Email Address</label>
-                  <input 
-                    type="email" 
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#8C7A6B]">
+                    Correo electrónico
+                  </label>
+                  <input
+                    type="email"
                     defaultValue="alex@bellavista.test"
                     className="w-full bg-[#FCFBF8] border border-[#E8E1D5] rounded-sm px-4 py-2.5 text-[#4A3B32] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#8C7A6B]">Employee ID</label>
-                  <input 
-                    type="text" 
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-[#8C7A6B]">
+                    ID de empleado
+                  </label>
+                  <input
+                    type="text"
                     defaultValue="EMP-8472"
                     disabled
                     className="w-full bg-[#F0EBE1] border border-[#E8E1D5] rounded-sm px-4 py-2.5 text-[#8C7A6B] cursor-not-allowed"
@@ -92,7 +109,7 @@ export function Settings() {
 
               <div className="pt-8 border-t border-[#E8E1D5] flex justify-end">
                 <button className="px-6 py-3 bg-[#4A3B32] hover:bg-[#322721] text-[#D4AF37] font-semibold tracking-widest uppercase text-xs rounded-sm transition-colors shadow-sm">
-                  Save Changes
+                  Guardar cambios
                 </button>
               </div>
             </div>
@@ -101,7 +118,9 @@ export function Settings() {
           {activeTab !== "profile" && (
             <div className="h-full flex flex-col items-center justify-center text-[#C4BCB3] py-12">
               <SettingsIcon className="w-12 h-12 mb-4 opacity-50" />
-              <p className="font-medium text-sm">This settings panel is coming soon.</p>
+              <p className="font-medium text-sm">
+                Esta sección estará disponible próximamente
+              </p>
             </div>
           )}
         </main>
