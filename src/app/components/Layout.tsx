@@ -14,7 +14,7 @@ export function Layout() {
   const navItems = [
     { icon: LayoutDashboard, label: "Mapa del local", path: "/" },
     { icon: CalendarDays, label: "Reservas", path: "/reservations" },
-    { icon: Settings, label: "Configuración", path: "/settings" },
+    //{ icon: Settings, label: "Configuración", path: "/settings" },
   ];
 
   return (
