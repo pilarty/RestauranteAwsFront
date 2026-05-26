@@ -60,13 +60,6 @@ export function PaginaRestaurante() {
             {/* BOTONES */}
             <div className="flex gap-3">
               <button
-                onClick={() => navigate("/realizar-reserva")}
-                className="bg-[#D4AF37] px-5 py-2 text-xs uppercase tracking-[0.25em] text-white font-semibold hover:bg-[#bc9729] transition"
-              >
-                Reservar
-              </button>
-
-              <button
                 onClick={() => navigate("/")}
                 className="border border-gray-300 px-5 py-2 text-xs uppercase tracking-[0.25em] text-gray-700 hover:bg-gray-100 transition"
               >

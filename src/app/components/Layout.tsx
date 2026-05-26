@@ -1,5 +1,4 @@
 import {
-  Bell,
   CalendarDays,
   LayoutDashboard,
   Settings,
@@ -22,13 +21,18 @@ export function Layout() {
     <div className="flex h-screen bg-[#FCFBF8] overflow-hidden text-[#4A3B32] selection:bg-[#D4AF37]/30">
       {/* Sidebar */}
       <nav className="w-20 md:w-64 flex flex-col border-r border-[#E8E1D5] bg-white shrink-0">
-        <div className="h-20 flex items-center justify-center md:justify-start md:px-8 border-b border-[#E8E1D5]">
-          <div className="w-8 h-8 rounded-sm bg-[#4A3B32] flex items-center justify-center shrink-0 shadow-sm">
-            <span className="text-[#D4AF37] font-serif text-lg font-bold leading-none">B</span>
-          </div>
-          <span className="ml-3 font-serif text-xl text-[#4A3B32] hidden md:block tracking-wide">
-            BellaVista
-          </span>
+        
+        {/* Cabecera del Sidebar con tu nueva imagen */}
+        <div className="h-20 flex items-center justify-center md:justify-start md:px-6 border-b border-[#E8E1D5] gap-3">
+          <img 
+            src="/src/app/assets/logoBellavista.png" 
+            alt="BellaVista Logo"
+            className="h-18 w-auto object-contain max-w-full md:max-w-[200px]" 
+          />
+
+          <h1 className="text-4xl md:text-3xl font-serif text-[#D4AF37]">
+            Bellavista
+          </h1>
         </div>
 
         <div className="flex-1 py-8 flex flex-col gap-2 px-4">
@@ -70,7 +74,7 @@ export function Layout() {
 
           <button
             onClick={() => navigate("/pagina-restaurante")}
-            className="mt-3 px-4 py-2 bg-[#D4AF37] text-[#4A3B32] font-semibold uppercase tracking-widest text-xs rounded-sm shadow-sm hover:bg-[#b88e20] transition-colors"
+                className="border border-gray-300 px-5 py-2 text-xs uppercase tracking-[0.25em] text-gray-700 hover:bg-gray-100 transition"
           >
             Modo comensal
           </button>
@@ -89,15 +93,9 @@ export function Layout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 bg-[#FCFBF8]">
+        {/* Header - Limpio y sin notificaciones */}
         <header className="h-20 flex items-center justify-end px-6 lg:px-10 border-b border-[#E8E1D5] bg-white/80 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-5">
-            <button className="relative p-2 text-[#8C7A6B] hover:text-[#4A3B32] transition-colors rounded-full hover:bg-[#F0EBE1]">
-              <Bell className="w-5 h-5" strokeWidth={1.5} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#D4AF37] rounded-full ring-2 ring-white" />
-            </button>
-
-            <div className="h-8 w-px bg-[#E8E1D5]" />
-
             <div className="text-right hidden sm:block">
               <div className="text-sm font-semibold text-[#4A3B32] uppercase tracking-wider">
                 {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

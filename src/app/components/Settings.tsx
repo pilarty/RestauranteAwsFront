@@ -15,7 +15,7 @@ export function Settings() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto h-full flex flex-col">
+    <div className="max-w-4xl ml-1 h-full flex flex-col">
       <div className="mb-8 border-b border-[#E8E1D5] pb-6">
         <h1 className="text-3xl font-serif text-[#4A3B32]">Configuración</h1>
         <p className="text-[#8C7A6B] mt-2 text-sm">
