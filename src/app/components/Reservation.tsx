@@ -27,10 +27,56 @@ export function Reservation() {
     setFormData({ ...formData, [field]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Reserva enviada:", formData);
-    setStep(4);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // 1. Buscar mesa disponible
+      const mesasRes = await fetch("http://localhost:8000/api/v1/mesas");
+      if (!mesasRes.ok) throw new Error("Error al buscar mesas");
+      const mesas = await mesasRes.json();
+
+      const mesaDisponible = mesas.find(
+        (m: any) => m.estado === "libre" && m.capacidad >= formData.guests
+      );
+
+      if (!mesaDisponible) {
+        setError("No hay mesas disponibles para la cantidad de personas seleccionada.");
+        return;
+      }
+
+      // 2. Crear la reserva con esa mesa
+      const payload = {
+        id_mesa: mesaDisponible.id_mesa,
+        nombre_cliente: formData.name,
+        id_cliente: formData.dni || null,
+        fecha_hora: `${formData.date}T${formData.time}:00`,
+        cantidad_personas: formData.guests,
+        motivo_visita: formData.motivoVisita,
+        notas: formData.specialRequests || null,
+        email: formData.email,
+        telefono: formData.phone,
+      };
+
+      const res = await fetch("http://localhost:8000/api/v1/reservas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Error al crear la reserva");
+
+      setStep(4);
+    } catch (err) {
+      setError("No se pudo confirmar la reserva. Intentá de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const isStep1Valid = formData.date && formData.time && formData.guests;
@@ -364,9 +410,10 @@ export function Reservation() {
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 bg-[#4A3B32] hover:bg-[#322721] text-[#D4AF37] px-6 py-4 rounded-sm font-semibold tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#4A3B32]/20"
+                      disabled={isLoading}
+                      className="flex-1 bg-[#4A3B32] hover:bg-[#322721] disabled:opacity-60 text-[#D4AF37] px-6 py-4 rounded-sm font-semibold tracking-widest uppercase text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#4A3B32]/20"
                     >
-                      Confirmar reserva
+                      {isLoading ? "Confirmando..." : "Confirmar reserva"}
                       <Check className="w-4 h-4" />
                     </button>
                   </div>
