@@ -78,6 +78,12 @@ export function Layout() {
           >
             Modo comensal
           </button>
+          <button
+            onClick={() => navigate("/pagina-qr")}
+                className="border border-gray-300 px-5 py-2 text-xs uppercase tracking-[0.25em] text-gray-700 hover:bg-gray-100 transition"
+          >
+            QR
+          </button>
         </div>
 
         <div className="p-4 border-t border-[#E8E1D5] bg-[#FCFBF8]/50">

@@ -7,6 +7,7 @@ import { Reservations } from "./components/Reservations";
 import { Settings } from "./components/Settings";
 import { TableDetails } from "./components/TableDetails";
 import { TableMap } from "./components/TableMap";
+import { PaginaQR } from "./components/PaginaQR";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -53,6 +54,11 @@ export const router = createBrowserRouter([
   {
     path: "/book",
     Component: Reservation,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/pagina-qr",
+    Component: PaginaQR,
     errorElement: <ErrorBoundary />,
   }
 ]);
