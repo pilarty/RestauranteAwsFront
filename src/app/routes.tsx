@@ -1,5 +1,4 @@
 import { createBrowserRouter, useRouteError } from "react-router";
-import { CustomerSurvey } from "./components/CustomerSurvey";
 import { Layout } from "./components/Layout";
 import { PaginaRestaurante } from "./components/PaginaRestaurante";
 import { Reservation } from "./components/Reservation";
@@ -44,11 +43,6 @@ export const router = createBrowserRouter([
   {
     path: "/pagina-restaurante",
     Component: PaginaRestaurante,
-    errorElement: <ErrorBoundary />,
-  },
-  {
-    path: "/survey/:tableId",
-    Component: CustomerSurvey,
     errorElement: <ErrorBoundary />,
   },
   {

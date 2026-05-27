@@ -1,6 +1,7 @@
 import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Mail, MapPin, MessageSquare, Phone, Sparkles, User, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
+import { base_url } from "../../api";
 
 export function Reservation() {
   const [step, setStep] = useState(1);
@@ -37,7 +38,7 @@ export function Reservation() {
 
     try {
       // 1. Buscar mesa disponible
-      const mesasRes = await fetch("http://localhost:8000/api/v1/mesas");
+      const mesasRes = await fetch("base/v1/mesas");
       if (!mesasRes.ok) throw new Error("Error al buscar mesas");
       const mesas = await mesasRes.json();
 
@@ -63,7 +64,7 @@ export function Reservation() {
         telefono: formData.phone,
       };
 
-      const res = await fetch("http://localhost:8000/api/v1/reservas", {
+      const res = await fetch(`${base_url}/v1/reservas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
