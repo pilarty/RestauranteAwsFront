@@ -64,22 +64,18 @@ export function PaginaQR() {
   const handleSubmit = async () => {
     setIsLoading(true);
     const payload = {
-      comensales: [
-        {
-          id_persona_en_mesa: idPersonaEnMesa,
-          id_cliente: parseInt(formData.dni) || 0,
-          franja_etaria_persona: formData.franjaEtaria,
-          cant_acompanantes: parseInt(formData.cantAcompanantes) || 0,
-          motivo_visita: formData.motivoVisita,
-          restriccion_alimentaria: formData.restriccion || "ninguna",
-          orden_de_pedido: 99,
-        },
-      ],
-      dia_semana: getDayOfWeek(),
-      franja_horaria: getHorario(),
+      id_mesa: parseInt(idMesa),
+      comensal: {
+        id_cliente: parseInt(formData.dni) || 0,
+        franja_etaria_persona: formData.franjaEtaria,
+        cant_acompanantes: parseInt(formData.cantAcompanantes) || 0,
+        motivo_visita: formData.motivoVisita,
+        restriccion_alimentaria: formData.restriccion || "ninguna",
+        orden_de_pedido: 1,
+      },
     };
     try {
-      const res = await fetch(`${base_url}/v1/mesas/${idMesa}/pedidos`, {
+      const res = await fetch(`${base_url}/v1/pedidos/preferencias`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -87,6 +83,12 @@ export function PaginaQR() {
       console.log("[handleSubmit] status:", res.status);
       const data = await res.json();
       console.log("[handleSubmit] response:", data);
+      
+      // Guardar codigo_pedido en localStorage
+      if (data.codigo_pedido) {
+        localStorage.setItem("codigo_pedido", data.codigo_pedido);
+        console.log("[handleSubmit] codigo_pedido guardado:", data.codigo_pedido);
+      }
     } catch (err) {
       console.error("[handleSubmit] error:", err);
     } finally {
