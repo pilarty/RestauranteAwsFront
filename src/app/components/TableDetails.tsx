@@ -1,20 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
 import { ArrowLeft, Users, Sparkles, Loader2 } from "lucide-react";
 import { base_url } from "../../api";
-
-type Comensal = {
-  id_persona_en_mesa: number;
-  id_cliente: number;
-  franja_etaria_persona: string;
-  cant_acompanantes: number;
-  motivo_visita: string;
-  restriccion_alimentaria: string;
-  orden_de_pedido: number;
-  es_repetidor: boolean;
-  visitas_previas: number;
-  ticket_promedio_historico: number | null;
-};
 
 type Plato = {
   id_plato: number;
@@ -68,87 +55,65 @@ export function TableDetails() {
   const reserva = location.state?.reserva;
 
   const [recomendaciones, setRecomendaciones] = useState<Recomendaciones | null>(null);
-  const [comensales, setComensales] = useState<Comensal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [generatingOrder, setGeneratingOrder] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [noPreferences, setNoPreferences] = useState(false);
 
-  useEffect(() => {
-    const fetchRecomendaciones = async () => {
-      if (!id) return;
+  const handleGenerarPedido = async () => {
+    if (!id) return;
+    
+    try {
+      setGeneratingOrder(true);
+      setError(null);
+      setNoPreferences(false);
       
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // PASO 1: GET comensales de la mesa
-        const getRes = await fetch(`${base_url}/v1/mesas/${id}/pedidos`, {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!getRes.ok) {
-          if (getRes.status === 404) {
-            setRecomendaciones(null);
-            setComensales([]);
-            return;
-          }
-          throw new Error(`Error ${getRes.status}: ${getRes.statusText}`);
-        }
-
-        const comensalesData: Comensal[] = await getRes.json();
-        setComensales(comensalesData);
-
-        if (!comensalesData || comensalesData.length === 0) {
+      const res = await fetch(`${base_url}/v1/pedidos/pedidos/${id}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          dia_semana: getDayOfWeek(),
+          franja_horaria: getHorario(),
+        }),
+      });
+      
+      console.log('[handleGenerarPedido] status:', res.status);
+      
+      if (!res.ok) {
+        const data = await res.json();
+        console.log('[handleGenerarPedido] error response:', data);
+        if (data.detail && data.detail.includes("No hay preferencias pendientes")) {
+          setNoPreferences(true);
           setRecomendaciones(null);
           return;
         }
-
-        // PASO 2: POST a mesa 99 con los comensales
-        const payload = {
-          comensales: comensalesData,
-          dia_semana: getDayOfWeek(),
-          franja_horaria: getHorario(),
-        };
-
-        const postRes = await fetch(`${base_url}/v1/mesas/99/pedidos`, {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!postRes.ok) {
-          const errorText = await postRes.text();
-          throw new Error(`Error ${postRes.status}: ${errorText || postRes.statusText}`);
-        }
-
-        const recomendacionesData: Recomendaciones = await postRes.json();
-        setRecomendaciones(recomendacionesData);
-        
-      } catch (err) {
-        console.error("Error al obtener recomendaciones:", err);
-        if (err instanceof TypeError) {
-          setError("Error de conexión: verifica que el backend esté disponible");
-        } else {
-          setError(err instanceof Error ? err.message : "Error desconocido");
-        }
-        setRecomendaciones(null);
-      } finally {
-        setLoading(false);
+        throw new Error(`Error ${res.status}: ${JSON.stringify(data.detail || data)}`);
       }
-    };
 
-    fetchRecomendaciones();
-  }, [id]);
+      const recomendacionesData: Recomendaciones = await res.json();
+      setRecomendaciones(recomendacionesData);
+      setNoPreferences(false);
+      
+    } catch (err) {
+      console.error("Error al generar pedido:", err);
+      if (err instanceof TypeError) {
+        setError("Error de conexión: verifica que el backend esté disponible");
+      } else {
+        setError(err instanceof Error ? err.message : "Error desconocido");
+      }
+      setRecomendaciones(null);
+    } finally {
+      setGeneratingOrder(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col -m-4 md:-m-6 lg:-m-10">
       {/* HEADER */}
-      <header className="px-6 py-4 border-b border-[#E8E1D5] bg-white flex justify-between">
+      <header className="px-6 py-4 border-b border-[#E8E1D5] bg-white flex justify-between items-center">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate("/")}>
             <ArrowLeft className="w-5 h-5" />
@@ -160,23 +125,61 @@ export function TableDetails() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-[#8C7A6B]">
-          <Users className="w-4 h-4" />
-          {reserva?.cantidad_personas ?? "?"} personas
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-xs text-[#8C7A6B]">
+            <Users className="w-4 h-4" />
+            {reserva?.cantidad_personas ?? "?"} personas
+          </div>
+          <button
+            onClick={handleGenerarPedido}
+            disabled={generatingOrder}
+            className="bg-[#D4AF37] hover:bg-[#C5A028] disabled:opacity-50 text-white px-6 py-2 rounded-sm font-semibold text-xs uppercase tracking-widest transition-colors flex items-center gap-2"
+          >
+            {generatingOrder ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generando...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Generar Pedido
+              </>
+            )}
+          </button>
         </div>
       </header>
 
       <div className="flex-1 overflow-auto p-6 bg-[#FCFBF8]">
         <div className="max-w-7xl mx-auto space-y-6">
 
-          {loading && (
+          {!recomendaciones && !error && !noPreferences && (
             <div className="bg-white border border-[#E8E1D5] p-12 text-center">
-              <Loader2 className="w-16 h-16 mx-auto mb-4 text-[#D4AF37] animate-spin" />
-              <p className="text-sm text-[#8C7A6B]">Cargando información...</p>
+              <Sparkles className="w-16 h-16 mx-auto mb-4 text-[#D4AF37] opacity-30" />
+              <h3 className="text-lg font-serif text-[#4A3B32] mb-2">
+                Mesa {id}
+              </h3>
+              <p className="text-sm text-[#8C7A6B]">
+                Presiona "Generar Pedido" para obtener las recomendaciones
+              </p>
             </div>
           )}
 
-          {!loading && error && (
+          {noPreferences && (
+            <div className="bg-yellow-50 border border-yellow-200 p-12 text-center rounded-sm">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-yellow-100 flex items-center justify-center">
+                <span className="text-3xl">⚠️</span>
+              </div>
+              <h3 className="text-lg font-serif text-yellow-900 mb-2">
+                Sin preferencias generadas
+              </h3>
+              <p className="text-sm text-yellow-700">
+                No hay preferencias generadas por los clientes para esta mesa
+              </p>
+            </div>
+          )}
+
+          {error && (
             <div className="bg-red-50 border border-red-200 p-12 text-center rounded-lg">
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
                 <span className="text-3xl">⚠️</span>
@@ -194,19 +197,7 @@ export function TableDetails() {
             </div>
           )}
 
-          {!loading && !error && !recomendaciones && (
-            <div className="bg-white border border-[#E8E1D5] p-12 text-center">
-              <Users className="w-16 h-16 mx-auto mb-4 text-[#D4AF37] opacity-30" />
-              <h3 className="text-lg font-serif text-[#4A3B32] mb-2">
-                No hay clientes en esta mesa
-              </h3>
-              <p className="text-sm text-[#8C7A6B]">
-                La información y recomendaciones aparecerán cuando lleguen los comensales
-              </p>
-            </div>
-          )}
-
-          {!loading && !error && recomendaciones && (
+          {recomendaciones && (
             <>
               {/* Mozo recomendado - solo el top */}
               {recomendaciones.mozos_recomendados && recomendaciones.mozos_recomendados.length > 0 && (
@@ -241,10 +232,8 @@ export function TableDetails() {
                   <h2 className="font-serif text-xl text-[#4A3B32] mb-6">Recomendaciones de Menú</h2>
                   
                   {(() => {
-                    // Calcular cantidad de platos a mostrar basado en acompañantes
-                    const cantidadPlatos = comensales.length > 0 
-                      ? comensales[0].cant_acompanantes + 1 
-                      : 1;
+                    // Calcular cantidad de platos a mostrar basado en cantidad de comensales
+                    const cantidadPlatos = recomendaciones.recomendaciones_por_comensal.length;
 
                     // Obtener todas las recomendaciones del primer comensal
                     const recComensal = recomendaciones.recomendaciones_por_comensal[0];
@@ -307,10 +296,9 @@ export function TableDetails() {
                   {/* Info adicional */}
                   <div className="mt-8 pt-6 border-t border-[#E8E1D5] flex justify-between text-xs text-[#8C7A6B]">
                     <div>
-                      <p>Comensales: {comensales.length}</p>
-                      {comensales.length > 0 && (
-                        <p>Acompañantes: {comensales[0].cant_acompanantes}</p>
-                      )}
+                      <p>Comensales: {recomendaciones.recomendaciones_por_comensal.length}</p>
+                      <p>Mesa: {recomendaciones.id_mesa}</p>
+                      <p>Estado: {recomendaciones.estado}</p>
                     </div>
                     <div className="text-right">
                       <p>Modelo: {recomendaciones.modelo_version}</p>
