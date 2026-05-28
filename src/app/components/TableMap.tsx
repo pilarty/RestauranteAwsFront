@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Users } from "lucide-react";
+import { RefreshCw, Users } from "lucide-react";
 import { base_url } from "../../api";
 
 type EstadoMesa = "disponible" | "ocupada";
@@ -55,6 +55,7 @@ interface MesaAPI {
   h?: number;
 
   // Personas actuales
+  cantidad_personas?: number;
   personas?: number;
   personas_actuales?: number;
   current_persons?: number;
@@ -107,6 +108,16 @@ function resolverCapacidad(mesa: MesaAPI): number {
   return mesa.capacidad ?? mesa.max_personas ?? mesa.capacity ?? mesa.seats ?? 4;
 }
 
+function resolverPersonas(mesa: MesaAPI): number {
+  return (
+    mesa.cantidad_personas ??
+    mesa.personas ??
+    mesa.personas_actuales ??
+    mesa.current_persons ??
+    0
+  );
+}
+
 function normalizarMesa(mesa: MesaAPI, index: number): Mesa {
   const pos = posicionesFallback[index] ?? posicionesFallback[0];
 
@@ -128,7 +139,7 @@ function normalizarMesa(mesa: MesaAPI, index: number): Mesa {
     y: tienePos ? mesa.y! : pos.y,
     w: tienePos ? mesa.w! : pos.w,
     h: tienePos ? mesa.h! : pos.h,
-    personas: mesa.personas ?? mesa.personas_actuales ?? mesa.current_persons,
+    personas: resolverPersonas(mesa),
   };
 }
 
@@ -157,53 +168,53 @@ export function TableMap() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchMesas = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchMesas = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const res = await fetch(`${base_url}/v1/mesas`);
+      const res = await fetch(`${base_url}/v1/mesas`);
 
-        if (!res.ok) {
-          throw new Error(`Error ${res.status}: ${res.statusText}`);
-        }
-
-        const rawText = await res.text();
-
-        let data: MesaAPI[];
-        try {
-          data = JSON.parse(rawText);
-        } catch {
-          throw new Error(
-            "El backend no devolvió JSON válido. Respuesta: " +
-              rawText.slice(0, 120)
-          );
-        }
-
-        if (!Array.isArray(data)) {
-          throw new Error(
-            "Respuesta inesperada del servidor (se esperaba un array de mesas)."
-          );
-        }
-
-        // Ordenar por ID numérico para que el índice → posición sea siempre consistente
-        const ordenadas = [...data].sort((a, b) => {
-          const idA = Number(a.id ?? a._id ?? a.table_id ?? a.mesa_id ?? 0);
-          const idB = Number(b.id ?? b._id ?? b.table_id ?? b.mesa_id ?? 0);
-          return idA - idB;
-        });
-
-        setMesas(ordenadas.map(normalizarMesa));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar mesas");
-      } finally {
-        setLoading(false);
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}: ${res.statusText}`);
       }
-    };
 
-    fetchMesas();
+      const rawText = await res.text();
+
+      let data: MesaAPI[];
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(
+          "El backend no devolvió JSON válido. Respuesta: " +
+            rawText.slice(0, 120)
+        );
+      }
+
+      if (!Array.isArray(data)) {
+        throw new Error(
+          "Respuesta inesperada del servidor (se esperaba un array de mesas)."
+        );
+      }
+
+      // Ordenar por ID numérico para que el índice → posición sea siempre consistente
+      const ordenadas = [...data].sort((a, b) => {
+        const idA = Number(a.id_mesa ?? a.id ?? a._id ?? a.table_id ?? a.mesa_id ?? 0);
+        const idB = Number(b.id_mesa ?? b.id ?? b._id ?? b.table_id ?? b.mesa_id ?? 0);
+        return idA - idB;
+      });
+
+      setMesas(ordenadas.map(normalizarMesa));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cargar mesas");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void fetchMesas();
+  }, [fetchMesas]);
 
   return (
     <div className="h-full flex flex-col">
@@ -216,6 +227,15 @@ export function TableMap() {
             Pasa el cursor sobre una mesa para ver los detalles
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => void fetchMesas()}
+          disabled={loading}
+          className="flex items-center gap-2 rounded-sm border border-[#E8E1D5] bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-[#4A3B32] shadow-sm transition-colors hover:border-[#D4AF37] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          {loading ? "Actualizando..." : "Refrescar"}
+        </button>
       </div>
 
       {/* Leyenda */}
@@ -347,6 +367,10 @@ export function TableMap() {
                     <span className="text-xl font-serif font-bold tracking-wide">
                       M{mesa.numero}
                     </span>
+                    <span className="absolute right-2 bottom-2 flex items-center gap-1 rounded-full bg-white/85 px-2 py-0.5 text-[10px] font-semibold text-[#4A3B32] shadow-sm">
+                      <Users className="w-3 h-3" />
+                      {cantidadPersonas}/{mesa.capacidad}
+                    </span>
 
                     {/* TOOLTIP */}
                     <div className="absolute bottom-full mb-5 hidden group-hover:flex flex-col items-center pointer-events-none z-50 filter drop-shadow-md">
@@ -366,9 +390,7 @@ export function TableMap() {
                           <span className="text-gray-400">Personas:</span>
                           <span className="flex items-center gap-1 text-gray-200">
                             <Users className="w-3 h-3" />
-                            {mesa.estado === "ocupada"
-                              ? `${cantidadPersonas}/${mesa.capacidad}`
-                              : `0/${mesa.capacidad}`}
+                            {cantidadPersonas}/{mesa.capacidad}
                           </span>
                         </div>
                       </div>
