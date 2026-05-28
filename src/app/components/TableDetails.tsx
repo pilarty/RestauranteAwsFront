@@ -3,15 +3,62 @@ import { useParams, useNavigate, useLocation } from "react-router";
 import { ArrowLeft, Users, Sparkles, Loader2 } from "lucide-react";
 import { base_url } from "../../api";
 
+type Comensal = {
+  id_persona_en_mesa: number;
+  id_cliente: number;
+  franja_etaria_persona: string;
+  cant_acompanantes: number;
+  motivo_visita: string;
+  restriccion_alimentaria: string;
+  orden_de_pedido: number;
+  es_repetidor: boolean;
+  visitas_previas: number;
+  ticket_promedio_historico: number | null;
+};
+
+type Plato = {
+  id_plato: number;
+  nombre_plato: string;
+  descripcion: string | null;
+  precio: number;
+  score: number;
+  rank: number;
+};
+
+type Mozo = {
+  id_mozo: number;
+  nombre_mozo: string;
+  propina_rate_esperado: number;
+  rank: number;
+};
+
+type RecomendacionesPorComensal = {
+  id_persona_en_mesa: number;
+  entrada?: Plato[];
+  principal?: Plato[];
+  postre?: Plato[];
+  bebida?: Plato[];
+};
+
 type Recomendaciones = {
-  mozos_recomendados?: { id_mozo: number; propina_rate_esperado: number; rank: number }[];
-  recomendaciones_por_comensal?: {
-    id_persona_en_mesa: number;
-    entrada?: { id_plato: number; score: number; rank: number }[];
-    principal?: { id_plato: number; score: number; rank: number }[];
-    postre?: { id_plato: number; score: number; rank: number }[];
-    bebida?: { id_plato: number; score: number; rank: number }[];
-  }[];
+  id_pedido: string;
+  id_mesa: number;
+  estado: string;
+  fecha_hora: string;
+  mozos_recomendados: Mozo[];
+  recomendaciones_por_comensal: RecomendacionesPorComensal[];
+  modelo_version: string;
+  latencia_ms: number;
+};
+
+const getDayOfWeek = () => new Date().getDay();
+
+const getHorario = () => {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 12) return "manana";
+  if (h >= 12 && h < 16) return "mediodia";
+  if (h >= 16 && h < 20) return "tarde";
+  return "noche";
 };
 
 export function TableDetails() {
@@ -21,6 +68,7 @@ export function TableDetails() {
   const reserva = location.state?.reserva;
 
   const [recomendaciones, setRecomendaciones] = useState<Recomendaciones | null>(null);
+  const [comensales, setComensales] = useState<Comensal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,36 +79,58 @@ export function TableDetails() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(`${base_url}/v1/mesas/${id}/pedidos`, {
+        
+        // PASO 1: GET comensales de la mesa
+        const getRes = await fetch(`${base_url}/v1/mesas/${id}/pedidos`, {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
           },
         });
         
-        if (res.ok) {
-          const data = await res.json();
-          // Verificar que el objeto tenga al menos alguna propiedad con datos
-          if (data && (
-            (data.mozos_recomendados && data.mozos_recomendados.length > 0) ||
-            (data.recomendaciones_por_comensal && data.recomendaciones_por_comensal.length > 0)
-          )) {
-            setRecomendaciones(data);
-          } else {
-            // Respuesta vacía o sin datos útiles
+        if (!getRes.ok) {
+          if (getRes.status === 404) {
             setRecomendaciones(null);
+            setComensales([]);
+            return;
           }
-        } else if (res.status === 404) {
-          // No hay recomendaciones para esta mesa (normal)
-          setRecomendaciones(null);
-        } else {
-          // Error del servidor
-          const errorText = await res.text();
-          setError(`Error ${res.status}: ${errorText || res.statusText}`);
+          throw new Error(`Error ${getRes.status}: ${getRes.statusText}`);
         }
+
+        const comensalesData: Comensal[] = await getRes.json();
+        setComensales(comensalesData);
+
+        if (!comensalesData || comensalesData.length === 0) {
+          setRecomendaciones(null);
+          return;
+        }
+
+        // PASO 2: POST a mesa 99 con los comensales
+        const payload = {
+          comensales: comensalesData,
+          dia_semana: getDayOfWeek(),
+          franja_horaria: getHorario(),
+        };
+
+        const postRes = await fetch(`${base_url}/v1/mesas/99/pedidos`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!postRes.ok) {
+          const errorText = await postRes.text();
+          throw new Error(`Error ${postRes.status}: ${errorText || postRes.statusText}`);
+        }
+
+        const recomendacionesData: Recomendaciones = await postRes.json();
+        setRecomendaciones(recomendacionesData);
+        
       } catch (err) {
         console.error("Error al obtener recomendaciones:", err);
-        // Error de red (CORS, conexión, etc.)
         if (err instanceof TypeError) {
           setError("Error de conexión: verifica que el backend esté disponible");
         } else {
@@ -138,52 +208,117 @@ export function TableDetails() {
 
           {!loading && !error && recomendaciones && (
             <>
-              {/* Mozos */}
+              {/* Mozo recomendado - solo el top */}
               {recomendaciones.mozos_recomendados && recomendaciones.mozos_recomendados.length > 0 && (
-                <section className="bg-white border border-[#E8E1D5] p-6">
-                  <h2 className="flex items-center gap-2 mb-4 font-serif text-[#4A3B32]">
+                <section className="bg-white border border-[#E8E1D5] p-6 rounded-sm shadow-sm">
+                  <h2 className="flex items-center gap-2 mb-4 font-serif text-xl text-[#4A3B32]">
                     <Sparkles className="w-5 h-5 text-[#D4AF37]" />
                     Mozo recomendado
                   </h2>
-                  <div className="space-y-2">
-                    {recomendaciones.mozos_recomendados.map(m => (
-                      <div key={m.id_mozo} className="flex justify-between items-center text-sm border border-[#E8E1D5] p-3 rounded-sm">
-                        <span className="text-[#4A3B32] font-medium">Mozo #{m.id_mozo}</span>
-                        <span className="text-xs text-[#8C7A6B]">
-                          Propina esperada: {(m.propina_rate_esperado * 100).toFixed(0)}%
-                        </span>
+                  {(() => {
+                    const topMozo = recomendaciones.mozos_recomendados[0];
+                    return (
+                      <div className="flex justify-between items-center border border-[#E8E1D5] p-4 rounded-sm bg-gradient-to-r from-[#FCFBF8] to-white">
+                        <div>
+                          <p className="text-[#4A3B32] font-semibold text-lg">{topMozo.nombre_mozo}</p>
+                          <p className="text-xs text-[#8C7A6B]">ID: {topMozo.id_mozo}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[#D4AF37] font-semibold text-lg">
+                            {(topMozo.propina_rate_esperado * 100).toFixed(1)}%
+                          </p>
+                          <p className="text-xs text-[#8C7A6B]">Propina esperada</p>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })()}
                 </section>
               )}
 
-              {/* Platos por comensal */}
-              {recomendaciones.recomendaciones_por_comensal && recomendaciones.recomendaciones_por_comensal.length > 0 && 
-                recomendaciones.recomendaciones_por_comensal.map(c => (
-                <section key={c.id_persona_en_mesa} className="bg-white border border-[#E8E1D5] p-6">
-                  <h2 className="font-serif text-[#4A3B32] mb-4">Comensal {c.id_persona_en_mesa}</h2>
-                  <div className="grid grid-cols-2 gap-3">
-                    {(["entrada", "principal", "postre", "bebida"] as const).map(curso => (
-                      <div key={curso}>
-                        <h3 className="text-xs uppercase text-[#8C7A6B] font-semibold mb-2 tracking-widest">{curso}</h3>
-                        {c[curso] && Array.isArray(c[curso]) && c[curso].length > 0 ? (
-                          c[curso].slice(0, 1).map(p => (
-                            <div key={p.id_plato} className="text-sm border border-[#E8E1D5] p-2 rounded-sm">
-                              <span className="text-[#4A3B32]">Plato #{p.id_plato}</span>
-                              <span className="text-xs text-[#8C7A6B] ml-2">{(p.score * 100).toFixed(0)}%</span>
+              {/* Recomendaciones de platos */}
+              {recomendaciones.recomendaciones_por_comensal && recomendaciones.recomendaciones_por_comensal.length > 0 && (
+                <section className="bg-white border border-[#E8E1D5] p-6 rounded-sm shadow-sm">
+                  <h2 className="font-serif text-xl text-[#4A3B32] mb-6">Recomendaciones de Menú</h2>
+                  
+                  {(() => {
+                    // Calcular cantidad de platos a mostrar basado en acompañantes
+                    const cantidadPlatos = comensales.length > 0 
+                      ? comensales[0].cant_acompanantes + 1 
+                      : 1;
+
+                    // Obtener todas las recomendaciones del primer comensal
+                    const recComensal = recomendaciones.recomendaciones_por_comensal[0];
+
+                    return (
+                      <div className="space-y-8">
+                        {(["entrada", "principal", "postre", "bebida"] as const).map(curso => {
+                          const platos = recComensal[curso];
+                          if (!platos || platos.length === 0) return null;
+
+                          return (
+                            <div key={curso}>
+                              <h3 className="text-sm uppercase text-[#D4AF37] font-bold mb-4 tracking-[0.3em] flex items-center gap-2">
+                                {curso}
+                                <span className="text-[#8C7A6B] text-xs normal-case tracking-normal font-normal">
+                                  ({cantidadPlatos} {cantidadPlatos === 1 ? 'opción' : 'opciones'})
+                                </span>
+                              </h3>
+                              <div className="grid gap-4">
+                                {platos.slice(0, cantidadPlatos).map((plato, idx) => (
+                                  <div 
+                                    key={plato.id_plato} 
+                                    className="border border-[#E8E1D5] p-4 rounded-sm hover:border-[#D4AF37] transition-colors"
+                                  >
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="text-xs font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-1 rounded">
+                                            #{idx + 1}
+                                          </span>
+                                          <h4 className="text-[#4A3B32] font-semibold">
+                                            {plato.nombre_plato}
+                                          </h4>
+                                        </div>
+                                        {plato.descripcion && (
+                                          <p className="text-xs text-[#8C7A6B] mt-2 leading-relaxed">
+                                            {plato.descripcion}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="text-right ml-4">
+                                        <p className="text-[#4A3B32] font-bold text-lg">
+                                          ${(plato.precio / 100).toFixed(0)}
+                                        </p>
+                                        <p className="text-xs text-[#D4AF37]">
+                                          Score: {(plato.score * 100).toFixed(0)}%
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          ))
-                        ) : (
-                          <div className="text-sm border border-[#E8E1D5] p-2 rounded-sm text-[#8C7A6B] text-center">
-                            Sin recomendación
-                          </div>
-                        )}
+                          );
+                        })}
                       </div>
-                    ))}
+                    );
+                  })()}
+
+                  {/* Info adicional */}
+                  <div className="mt-8 pt-6 border-t border-[#E8E1D5] flex justify-between text-xs text-[#8C7A6B]">
+                    <div>
+                      <p>Comensales: {comensales.length}</p>
+                      {comensales.length > 0 && (
+                        <p>Acompañantes: {comensales[0].cant_acompanantes}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p>Modelo: {recomendaciones.modelo_version}</p>
+                      <p>Latencia: {recomendaciones.latencia_ms}ms</p>
+                    </div>
                   </div>
                 </section>
-              ))}
+              )}
             </>
           )}
         </div>
