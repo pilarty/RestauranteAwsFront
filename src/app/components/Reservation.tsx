@@ -9,12 +9,10 @@ export function Reservation() {
     date: "",
     time: "",
     guests: 2,
-    dni: "",
     name: "",
     email: "",
     phone: "",
     motivoVisita: "Negocios",
-    restriccionAlimentaria: "Ninguna",
     specialRequests: "",
     seatingPreference: "indoor",
   });
@@ -55,10 +53,10 @@ export function Reservation() {
       const payload = {
         id_mesa: mesaDisponible.id_mesa,
         nombre_cliente: formData.name,
-        id_cliente: formData.dni || null,
         fecha_hora: `${formData.date}T${formData.time}:00`,
         cantidad_personas: formData.guests,
         motivo_visita: formData.motivoVisita,
+        restriccion_alimentaria: "Ninguna",
         notas: formData.specialRequests || null,
         email: formData.email,
         telefono: formData.phone,
@@ -81,7 +79,7 @@ export function Reservation() {
   };
 
   const isStep1Valid = formData.date && formData.time && formData.guests;
-  const isStep2Valid = formData.dni && formData.name && formData.email && formData.phone;
+  const isStep2Valid = formData.name && formData.email && formData.phone;
 
   return (
     <div 
@@ -228,19 +226,6 @@ export function Reservation() {
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  <div>
-                    <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
-                      <User className="w-4 h-4 text-[#D4AF37]" />
-                      DNI
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.dni}
-                      onChange={(e) => updateField("dni", e.target.value)}
-                      placeholder="Número de documento"
-                      className="w-full bg-white border border-[#E8E1D5] rounded-sm px-4 py-3.5 text-[#4A3B32] placeholder:text-[#C4BCB3] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
-                    />
-                  </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
@@ -339,21 +324,6 @@ export function Reservation() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                      Restricción alimentaria
-                    </label>
-                    <select
-                      value={formData.restriccionAlimentaria}
-                      onChange={(e) => updateField("restriccionAlimentaria", e.target.value)}
-                      className="w-full bg-white border border-[#E8E1D5] rounded-sm px-4 py-3.5 text-[#4A3B32] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
-                    >
-                      {restricciones.map((restriccion) => (
-                        <option key={restriccion} value={restriccion}>{restriccion}</option>
-                      ))}
-                    </select>
-                  </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
@@ -468,10 +438,6 @@ export function Reservation() {
                         <span className="text-[#4A3B32] font-medium">{formData.guests} personas</span>
                       </div>
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-[#8C7A6B]">DNI</span>
-                        <span className="text-[#4A3B32] font-medium">{formData.dni}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
                         <span className="text-[#8C7A6B]">Nombre</span>
                         <span className="text-[#4A3B32] font-medium">{formData.name}</span>
                       </div>
@@ -479,12 +445,6 @@ export function Reservation() {
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-[#8C7A6B]">Motivo de visita</span>
                           <span className="text-[#D4AF37] font-medium">{formData.motivoVisita}</span>
-                        </div>
-                      )}
-                      {formData.restriccionAlimentaria && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-[#8C7A6B]">Restricción alimentaria</span>
-                          <span className="text-[#4A3B32] font-medium">{formData.restriccionAlimentaria}</span>
                         </div>
                       )}
                       {formData.seatingPreference && (
@@ -511,12 +471,10 @@ export function Reservation() {
                           date: "",
                           time: "",
                           guests: 2,
-                          dni: "",
                           name: "",
                           email: "",
                           phone: "",
                           motivoVisita: "Negocios",
-                          restriccionAlimentaria: "Ninguna",
                           specialRequests: "",
                           seatingPreference: "indoor",
                         });
