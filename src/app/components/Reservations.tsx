@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Clock, Users, Search, Star, Heart } from "lucide-react";
+import { Clock, Users, Search } from "lucide-react";
 import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import { base_url } from "../../api";
@@ -39,32 +39,39 @@ export function Reservations() {
     try {
       // 1. Obtener mesas disponibles
       const mesasRes = await fetch(`${base_url}/v1/mesas`);
-      if (!mesasRes.ok) throw new Error("Error al obtener mesas");
+      if (!mesasRes.ok) throw new Error(`Error al obtener mesas: ${mesasRes.status}`);
       const mesas = await mesasRes.json();
 
-      // 2. Buscar mesa libre con capacidad suficiente
-      const mesaDisponible = mesas.find(
-        (m: any) => m.estado === "libre" && m.capacidad >= reserva.cantidad_personas
-      );
+      // 2. Usar la mesa ya asignada a la reserva, o buscar una libre si no tiene
+      let mesaTarget = mesas.find((m: any) => m.id_mesa === reserva.id_mesa);
 
-      if (!mesaDisponible) {
+      if (!mesaTarget || mesaTarget.estado !== "libre") {
+        // Fallback: buscar cualquier mesa libre con capacidad suficiente
+        mesaTarget = mesas.find(
+          (m: any) => m.estado === "libre" && m.capacidad >= reserva.cantidad_personas
+        );
+      }
+
+      if (!mesaTarget) {
         alert("No hay mesas disponibles para sentar a este cliente.");
         return;
       }
 
       // 3. Marcar mesa como ocupada
-      await fetch(`${base_url}/v1/mesas/${mesaDisponible.id_mesa}`, {
+      const patchMesaRes = await fetch(`${base_url}/v1/mesas/${mesaTarget.id_mesa}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado: "ocupada" }),
       });
+      if (!patchMesaRes.ok) throw new Error(`Error al actualizar mesa: ${patchMesaRes.status}`);
 
       // 4. Actualizar reserva a completada
-      await fetch(`${base_url}/v1/reservas/${reserva.id_reserva}`, {
+      const patchReservaRes = await fetch(`${base_url}/v1/reservas/${reserva.id_reserva}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado: "completada" }),
       });
+      if (!patchReservaRes.ok) throw new Error(`Error al actualizar reserva: ${patchReservaRes.status}`);
 
       // 5. Actualizar estado local
       setReservas(prev =>
@@ -74,10 +81,11 @@ export function Reservations() {
       );
 
       // 6. Navegar a la mesa
-      navigate(`/mesa/${mesaDisponible.id_mesa}`, { state: { reserva } });
+      navigate(`/table/${mesaTarget.id_mesa}`, { state: { reserva } });
 
     } catch (err) {
-      alert("Ocurrió un error al marcar la llegada. Intentá de nuevo.");
+      console.error("Error en marcarLlegada:", err);
+      alert(`Ocurrió un error al marcar la llegada: ${err instanceof Error ? err.message : "Error desconocido"}`);
     }
   };
 

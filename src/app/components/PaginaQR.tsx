@@ -72,7 +72,7 @@ export function PaginaQR() {
           cant_acompanantes: parseInt(formData.cantAcompanantes) || 0,
           motivo_visita: formData.motivoVisita,
           restriccion_alimentaria: formData.restriccion || "ninguna",
-          orden_de_pedido: Math.floor(Math.random() * 5) + 1,
+          orden_de_pedido: 99,
         },
       ],
       dia_semana: getDayOfWeek(),
