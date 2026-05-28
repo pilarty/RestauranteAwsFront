@@ -1,4 +1,4 @@
-import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Mail, MapPin, MessageSquare, Phone, Sparkles, User, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Check, ChevronRight, Clock, Mail, MessageSquare, Phone, Sparkles, User, Users } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { base_url } from "../../api";
@@ -14,11 +14,9 @@ export function Reservation() {
     phone: "",
     motivoVisita: "Negocios",
     specialRequests: "",
-    seatingPreference: "indoor",
   });
 
   const motivos = ["Negocios", "Cena casual", "Cumpleaños", "Aniversario", "Noche romántica", "Celebración"];
-  const restricciones = ["Ninguna", "Vegetariana", "Vegana", "Sin gluten", "Sin lactosa", "Alergia a frutos secos"];
   const timeSlots = ["17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30"];
   const guestOptions = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -36,7 +34,7 @@ export function Reservation() {
 
     try {
       // 1. Buscar mesa disponible
-      const mesasRes = await fetch("base/v1/mesas");
+      const mesasRes = await fetch(`${base_url}/v1/mesas`);
       if (!mesasRes.ok) throw new Error("Error al buscar mesas");
       const mesas = await mesasRes.json();
 
@@ -53,14 +51,15 @@ export function Reservation() {
       const payload = {
         id_mesa: mesaDisponible.id_mesa,
         nombre_cliente: formData.name,
+        id_cliente: Math.floor(Math.random() * 999) + 1,
         fecha_hora: `${formData.date}T${formData.time}:00`,
         cantidad_personas: formData.guests,
         motivo_visita: formData.motivoVisita,
-        restriccion_alimentaria: "Ninguna",
         notas: formData.specialRequests || null,
         email: formData.email,
         telefono: formData.phone,
       };
+
       console.log(JSON.stringify(payload));
 
       const res = await fetch(`${base_url}/v1/reservas`, {
@@ -85,12 +84,12 @@ export function Reservation() {
   const isStep2Valid = formData.name && formData.email && formData.phone;
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center flex items-center justify-center p-4 md:p-8 relative"
       style={{ backgroundImage: `url('https://images.unsplash.com/photo-1560130934-590b85fc08e7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaW5lJTIwZGluaW5nJTIwcmVzdGF1cmFudCUyMGludGVyaW9yJTIwZWxlZ2FudHxlbnwxfHx8fDE3Nzk0MDM2Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral')` }}
     >
       <div className="absolute inset-0 bg-[#2A1F18]/60 backdrop-blur-[3px]"></div>
-      
+
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -229,7 +228,6 @@ export function Reservation() {
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <User className="w-4 h-4 text-[#D4AF37]" />
@@ -327,38 +325,6 @@ export function Reservation() {
                     </div>
                   </div>
 
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-[#D4AF37]" />
-                      Preferencia de mesa
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => updateField("seatingPreference", "indoor")}
-                        className={`py-4 rounded-sm text-sm transition-all border ${
-                          formData.seatingPreference === "indoor"
-                            ? 'bg-[#4A3B32] text-[#D4AF37] border-[#4A3B32] shadow-md'
-                            : 'bg-white text-[#8C7A6B] border-[#E8E1D5] hover:border-[#D4AF37] hover:text-[#4A3B32]'
-                        }`}
-                      >
-                        Interior
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateField("seatingPreference", "outdoor")}
-                        className={`py-4 rounded-sm text-sm transition-all border ${
-                          formData.seatingPreference === "outdoor"
-                            ? 'bg-[#4A3B32] text-[#D4AF37] border-[#4A3B32] shadow-md'
-                            : 'bg-white text-[#8C7A6B] border-[#E8E1D5] hover:border-[#D4AF37] hover:text-[#4A3B32]'
-                        }`}
-                      >
-                        Terraza
-                      </button>
-                    </div>
-                  </div>
-
                   <div>
                     <label className="block text-xs font-semibold text-[#8C7A6B] mb-3 uppercase tracking-widest flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-[#D4AF37]" />
@@ -372,6 +338,10 @@ export function Reservation() {
                       className="w-full bg-white border border-[#E8E1D5] rounded-sm px-4 py-3.5 text-[#4A3B32] placeholder:text-[#C4BCB3] focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all resize-none"
                     />
                   </div>
+
+                  {error && (
+                    <p className="text-red-500 text-sm text-center">{error}</p>
+                  )}
 
                   <div className="flex gap-3 pt-4">
                     <button
@@ -450,12 +420,6 @@ export function Reservation() {
                           <span className="text-[#D4AF37] font-medium">{formData.motivoVisita}</span>
                         </div>
                       )}
-                      {formData.seatingPreference && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-[#8C7A6B]">Ubicación</span>
-                          <span className="text-[#4A3B32] font-medium capitalize">{formData.seatingPreference === 'indoor' ? 'Interior' : 'Terraza'}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -479,7 +443,6 @@ export function Reservation() {
                           phone: "",
                           motivoVisita: "Negocios",
                           specialRequests: "",
-                          seatingPreference: "indoor",
                         });
                       }}
                       className="flex-1 bg-[#D4AF37] hover:bg-[#C5A028] text-white px-6 py-4 rounded-sm font-semibold tracking-widest uppercase text-xs transition-all text-center shadow-lg shadow-[#D4AF37]/20"

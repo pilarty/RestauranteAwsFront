@@ -35,16 +35,50 @@ export function Reservations() {
       .finally(() => setLoading(false));
   }, []);
 
-  const marcarLlegada = (reserva: Reserva) => {
-    // Actualiza estado a completada en el back
-    fetch(`${base_url}/v1/reservas/${reserva.id_reserva}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: "completada" }),
-    });
+  const marcarLlegada = async (reserva: Reserva) => {
+    try {
+      // 1. Obtener mesas disponibles
+      const mesasRes = await fetch(`${base_url}/v1/mesas`);
+      if (!mesasRes.ok) throw new Error("Error al obtener mesas");
+      const mesas = await mesasRes.json();
 
-    // Navega a TableDetails pasando los datos de la reserva
-    navigate(`/mesa/${reserva.id_mesa}`, { state: { reserva } });
+      // 2. Buscar mesa libre con capacidad suficiente
+      const mesaDisponible = mesas.find(
+        (m: any) => m.estado === "libre" && m.capacidad >= reserva.cantidad_personas
+      );
+
+      if (!mesaDisponible) {
+        alert("No hay mesas disponibles para sentar a este cliente.");
+        return;
+      }
+
+      // 3. Marcar mesa como ocupada
+      await fetch(`${base_url}/v1/mesas/${mesaDisponible.id_mesa}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: "ocupada" }),
+      });
+
+      // 4. Actualizar reserva a completada
+      await fetch(`${base_url}/v1/reservas/${reserva.id_reserva}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ estado: "completada" }),
+      });
+
+      // 5. Actualizar estado local
+      setReservas(prev =>
+        prev.map(r =>
+          r.id_reserva === reserva.id_reserva ? { ...r, estado: "completada" } : r
+        )
+      );
+
+      // 6. Navegar a la mesa
+      navigate(`/mesa/${mesaDisponible.id_mesa}`, { state: { reserva } });
+
+    } catch (err) {
+      alert("Ocurrió un error al marcar la llegada. Intentá de nuevo.");
+    }
   };
 
   const reservasFiltradas = reservas
