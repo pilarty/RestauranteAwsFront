@@ -218,12 +218,12 @@ export function PaginaQR() {
                 {
                   label: "Franja etaria",
                   field: "franjaEtaria",
-                  options: ["joven", "adulto", "mayor", "mixto"],
+                  options: ["joven", "adulto", "senior", "mixto"],
                 },
                 {
                   label: "Motivo de visita",
                   field: "motivoVisita",
-                  options: ["trabajo", "cumpleaños", "aniversario", "cita", "casual"],
+                  options: ["negocios", "cumpleaños", "date", "turista", "casual"],
                 },
                 {
                   label: "Restricción alimentaria",
