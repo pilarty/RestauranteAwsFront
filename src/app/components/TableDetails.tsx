@@ -1,34 +1,64 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
-import { ArrowLeft, Users, Edit3, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, Sparkles, Loader2 } from "lucide-react";
 import { base_url } from "../../api";
 
-const CHIP_CATEGORIES = {
-  edades: ["20s", "30s", "40s", "50s", "Mixto"],
-  ocasion: ["Cumpleaños", "Aniversario", "Cita", "Reunión", "Ninguna"],
+type Comensal = {
+  id_persona_en_mesa: number;
+  id_cliente: number;
+  franja_etaria_persona: string;
+  cant_acompanantes: number;
+  motivo_visita: string;
+  restriccion_alimentaria: string;
+  orden_de_pedido: number;
+  es_repetidor: boolean;
+  visitas_previas: number;
+  ticket_promedio_historico: number | null;
+};
+
+type Plato = {
+  id_plato: number;
+  nombre_plato: string;
+  descripcion: string | null;
+  precio: number;
+  score: number;
+  rank: number;
+};
+
+type Mozo = {
+  id_mozo: number;
+  nombre_mozo: string;
+  propina_rate_esperado: number;
+  rank: number;
+};
+
+type RecomendacionesPorComensal = {
+  id_persona_en_mesa: number;
+  entrada?: Plato[];
+  principal?: Plato[];
+  postre?: Plato[];
+  bebida?: Plato[];
 };
 
 type Recomendaciones = {
-  mozos_recomendados: { id_mozo: number; propina_rate_esperado: number; rank: number }[];
-  recomendaciones_por_comensal: {
-    id_persona_en_mesa: number;
-    entrada: { id_plato: number; score: number; rank: number }[];
-    principal: { id_plato: number; score: number; rank: number }[];
-    postre: { id_plato: number; score: number; rank: number }[];
-    bebida: { id_plato: number; score: number; rank: number }[];
-  }[];
+  id_pedido: string;
+  id_mesa: number;
+  estado: string;
+  fecha_hora: string;
+  mozos_recomendados: Mozo[];
+  recomendaciones_por_comensal: RecomendacionesPorComensal[];
+  modelo_version: string;
+  latencia_ms: number;
 };
 
-const franjaHoraria = () => {
+const getDayOfWeek = () => new Date().getDay();
+
+const getHorario = () => {
   const h = new Date().getHours();
-  if (h < 15) return "mediodia";
-  if (h < 19) return "tarde";
+  if (h >= 6 && h < 12) return "manana";
+  if (h >= 12 && h < 16) return "mediodia";
+  if (h >= 16 && h < 20) return "tarde";
   return "noche";
-};
-
-const diaSemana = () => {
-  const d = new Date().getDay();
-  return d === 0 ? 6 : d - 1;
 };
 
 export function TableDetails() {
@@ -37,77 +67,83 @@ export function TableDetails() {
   const location = useLocation();
   const reserva = location.state?.reserva;
 
-  const [chips, setChips] = useState<Record<string, string>>({
-    edades: "",
-    ocasion: reserva?.motivo_visita ?? "",
-  });
-
-  useEffect(() => {
-    if (!reserva?.notas) return;
-    try {
-      const notasQR = JSON.parse(reserva.notas);
-      setChips(prev => ({
-        ...prev,
-        edades: notasQR.edades ?? prev.edades,
-        ocasion: notasQR.ocasion ?? prev.ocasion,
-      }));
-    } catch {}
-  }, [reserva]);
-
   const [recomendaciones, setRecomendaciones] = useState<Recomendaciones | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [comensales, setComensales] = useState<Comensal[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const toggleChip = (category: string, value: string) => {
-    setChips(prev => ({
-      ...prev,
-      [category]: prev[category] === value ? "" : value,
-    }));
-  };
+  useEffect(() => {
+    const fetchRecomendaciones = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // PASO 1: GET comensales de la mesa
+        const getRes = await fetch(`${base_url}/v1/mesas/${id}/pedidos`, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!getRes.ok) {
+          if (getRes.status === 404) {
+            setRecomendaciones(null);
+            setComensales([]);
+            return;
+          }
+          throw new Error(`Error ${getRes.status}: ${getRes.statusText}`);
+        }
 
-  const handleGenerarRecomendaciones = async () => {
-    setLoading(true);
-    setError(null);
+        const comensalesData: Comensal[] = await getRes.json();
+        setComensales(comensalesData);
 
-    const cantPersonas = reserva?.cantidad_personas ?? 1;
+        if (!comensalesData || comensalesData.length === 0) {
+          setRecomendaciones(null);
+          return;
+        }
 
-    const comensales = Array.from({ length: cantPersonas }, (_, i) => ({
-      id_persona_en_mesa: i + 1,
-      id_cliente: i === 0 ? (reserva?.id_cliente ?? null) : null,
-      franja_etaria_persona: chips.edades || "adulto",
-      cant_acompanantes: cantPersonas - 1,
-      motivo_visita: chips.ocasion || reserva?.motivo_visita || "casual",
-      restriccion_alimentaria: "ninguna",
-      orden_de_pedido: i + 1,
-    }));
+        // PASO 2: POST a mesa 99 con los comensales
+        const payload = {
+          comensales: comensalesData,
+          dia_semana: getDayOfWeek(),
+          franja_horaria: getHorario(),
+        };
 
-    const payload = {
-      comensales,
-      dia_semana: diaSemana(),
-      franja_horaria: franjaHoraria(),
+        const postRes = await fetch(`${base_url}/v1/mesas/99/pedidos`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!postRes.ok) {
+          const errorText = await postRes.text();
+          throw new Error(`Error ${postRes.status}: ${errorText || postRes.statusText}`);
+        }
+
+        const recomendacionesData: Recomendaciones = await postRes.json();
+        setRecomendaciones(recomendacionesData);
+        
+      } catch (err) {
+        console.error("Error al obtener recomendaciones:", err);
+        if (err instanceof TypeError) {
+          setError("Error de conexión: verifica que el backend esté disponible");
+        } else {
+          setError(err instanceof Error ? err.message : "Error desconocido");
+        }
+        setRecomendaciones(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    try {
-      const res = await fetch(`${base_url}/v1/mesas/${id}/pedidos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error("Error al generar recomendaciones");
-
-      const data = await res.json();
-      setRecomendaciones(data);
-    } catch (err) {
-      setError("No se pudieron generar las recomendaciones.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const notasQR = (() => {
-    try { return JSON.parse(reserva?.notas); } catch { return null; }
-  })();
+    fetchRecomendaciones();
+  }, [id]);
 
   return (
     <div className="h-full flex flex-col -m-4 md:-m-6 lg:-m-10">
@@ -131,125 +167,160 @@ export function TableDetails() {
       </header>
 
       <div className="flex-1 overflow-auto p-6 bg-[#FCFBF8]">
-        <div className="max-w-7xl mx-auto grid xl:grid-cols-12 gap-8">
+        <div className="max-w-7xl mx-auto space-y-6">
 
-          {/* IZQUIERDA */}
-          <div className="xl:col-span-5 space-y-6">
-            <section className="bg-white border border-[#E8E1D5] p-6">
-              <h2 className="flex items-center gap-2 mb-4 font-serif text-[#4A3B32]">
-                <Edit3 className="w-5 h-5" />
-                Observaciones del mozo
-              </h2>
+          {loading && (
+            <div className="bg-white border border-[#E8E1D5] p-12 text-center">
+              <Loader2 className="w-16 h-16 mx-auto mb-4 text-[#D4AF37] animate-spin" />
+              <p className="text-sm text-[#8C7A6B]">Cargando información...</p>
+            </div>
+          )}
 
-              {/* Datos precargados */}
-              {reserva && (
-                <div className="mb-5 p-3 bg-[#FCFBF8] border border-[#E8E1D5] rounded-sm text-xs text-[#8C7A6B] space-y-1">
-                  <p>
-                    <span className="font-semibold">Motivo:</span>{" "}
-                    {reserva.motivo_visita ?? "No especificado"}
-                  </p>
-                  {notasQR ? (
-                    <>
-                      {notasQR.nombre && (
-                        <p><span className="font-semibold">Nombre (QR):</span> {notasQR.nombre}</p>
-                      )}
-                      {notasQR.tipoGrupo && (
-                        <p><span className="font-semibold">Tipo de grupo:</span> {notasQR.tipoGrupo}</p>
-                      )}
-                      {notasQR.estadoAnimo && (
-                        <p><span className="font-semibold">Estado de ánimo:</span> {notasQR.estadoAnimo}</p>
-                      )}
-                    </>
-                  ) : (
-                    <p><span className="font-semibold">Notas:</span> {reserva.notas ?? "—"}</p>
-                  )}
-                </div>
-              )}
-
-              {Object.entries(CHIP_CATEGORIES).map(([key, options]) => (
-                <div key={key} className="mb-5">
-                  <h3 className="text-xs uppercase text-[#8C7A6B] mb-2 font-semibold tracking-widest">{key}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {options.map(opt => (
-                      <button
-                        key={opt}
-                        onClick={() => toggleChip(key, opt)}
-                        className={`px-3 py-1 text-xs border rounded-sm transition-all ${
-                          chips[key] === opt
-                            ? "bg-[#4A3B32] text-[#D4AF37] border-[#4A3B32]"
-                            : "bg-white text-[#8C7A6B] border-[#E8E1D5] hover:border-[#D4AF37]"
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
-              <button
-                onClick={handleGenerarRecomendaciones}
-                disabled={loading}
-                className="w-full mt-4 bg-[#D4AF37] hover:bg-[#C5A028] disabled:opacity-60 text-white py-3 text-xs uppercase font-semibold flex items-center justify-center gap-2"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                {loading ? "Generando..." : "Generar recomendaciones"}
-              </button>
-
-              {error && <p className="text-red-500 text-xs mt-2 text-center">{error}</p>}
-            </section>
-          </div>
-
-          {/* DERECHA */}
-          <div className="xl:col-span-7 space-y-6">
-            {!recomendaciones && !loading && (
-              <div className="bg-white border border-[#E8E1D5] p-6 text-center text-sm text-[#8C7A6B]">
-                Completá los datos y generá las recomendaciones de IA
+          {!loading && error && (
+            <div className="bg-red-50 border border-red-200 p-12 text-center rounded-lg">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                <span className="text-3xl">⚠️</span>
               </div>
-            )}
+              <h3 className="text-lg font-serif text-red-900 mb-2">
+                Error de conexión
+              </h3>
+              <p className="text-sm text-red-700 mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs uppercase font-semibold rounded"
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
 
-            {recomendaciones && (
-              <>
-                {/* Mozos */}
-                <section className="bg-white border border-[#E8E1D5] p-6">
-                  <h2 className="flex items-center gap-2 mb-4 font-serif text-[#4A3B32]">
+          {!loading && !error && !recomendaciones && (
+            <div className="bg-white border border-[#E8E1D5] p-12 text-center">
+              <Users className="w-16 h-16 mx-auto mb-4 text-[#D4AF37] opacity-30" />
+              <h3 className="text-lg font-serif text-[#4A3B32] mb-2">
+                No hay clientes en esta mesa
+              </h3>
+              <p className="text-sm text-[#8C7A6B]">
+                La información y recomendaciones aparecerán cuando lleguen los comensales
+              </p>
+            </div>
+          )}
+
+          {!loading && !error && recomendaciones && (
+            <>
+              {/* Mozo recomendado - solo el top */}
+              {recomendaciones.mozos_recomendados && recomendaciones.mozos_recomendados.length > 0 && (
+                <section className="bg-white border border-[#E8E1D5] p-6 rounded-sm shadow-sm">
+                  <h2 className="flex items-center gap-2 mb-4 font-serif text-xl text-[#4A3B32]">
                     <Sparkles className="w-5 h-5 text-[#D4AF37]" />
                     Mozo recomendado
                   </h2>
-                  <div className="space-y-2">
-                    {recomendaciones.mozos_recomendados.map(m => (
-                      <div key={m.id_mozo} className="flex justify-between items-center text-sm border border-[#E8E1D5] p-3 rounded-sm">
-                        <span className="text-[#4A3B32] font-medium">Mozo #{m.id_mozo}</span>
-                        <span className="text-xs text-[#8C7A6B]">
-                          Propina esperada: {(m.propina_rate_esperado * 100).toFixed(0)}%
-                        </span>
+                  {(() => {
+                    const topMozo = recomendaciones.mozos_recomendados[0];
+                    return (
+                      <div className="flex justify-between items-center border border-[#E8E1D5] p-4 rounded-sm bg-gradient-to-r from-[#FCFBF8] to-white">
+                        <div>
+                          <p className="text-[#4A3B32] font-semibold text-lg">{topMozo.nombre_mozo}</p>
+                          <p className="text-xs text-[#8C7A6B]">ID: {topMozo.id_mozo}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[#D4AF37] font-semibold text-lg">
+                            {(topMozo.propina_rate_esperado * 100).toFixed(1)}%
+                          </p>
+                          <p className="text-xs text-[#8C7A6B]">Propina esperada</p>
+                        </div>
                       </div>
-                    ))}
+                    );
+                  })()}
+                </section>
+              )}
+
+              {/* Recomendaciones de platos */}
+              {recomendaciones.recomendaciones_por_comensal && recomendaciones.recomendaciones_por_comensal.length > 0 && (
+                <section className="bg-white border border-[#E8E1D5] p-6 rounded-sm shadow-sm">
+                  <h2 className="font-serif text-xl text-[#4A3B32] mb-6">Recomendaciones de Menú</h2>
+                  
+                  {(() => {
+                    // Calcular cantidad de platos a mostrar basado en acompañantes
+                    const cantidadPlatos = comensales.length > 0 
+                      ? comensales[0].cant_acompanantes + 1 
+                      : 1;
+
+                    // Obtener todas las recomendaciones del primer comensal
+                    const recComensal = recomendaciones.recomendaciones_por_comensal[0];
+
+                    return (
+                      <div className="space-y-8">
+                        {(["entrada", "principal", "postre", "bebida"] as const).map(curso => {
+                          const platos = recComensal[curso];
+                          if (!platos || platos.length === 0) return null;
+
+                          return (
+                            <div key={curso}>
+                              <h3 className="text-sm uppercase text-[#D4AF37] font-bold mb-4 tracking-[0.3em] flex items-center gap-2">
+                                {curso}
+                                <span className="text-[#8C7A6B] text-xs normal-case tracking-normal font-normal">
+                                  ({cantidadPlatos} {cantidadPlatos === 1 ? 'opción' : 'opciones'})
+                                </span>
+                              </h3>
+                              <div className="grid gap-4">
+                                {platos.slice(0, cantidadPlatos).map((plato, idx) => (
+                                  <div 
+                                    key={plato.id_plato} 
+                                    className="border border-[#E8E1D5] p-4 rounded-sm hover:border-[#D4AF37] transition-colors"
+                                  >
+                                    <div className="flex justify-between items-start mb-2">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <span className="text-xs font-bold text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-1 rounded">
+                                            #{idx + 1}
+                                          </span>
+                                          <h4 className="text-[#4A3B32] font-semibold">
+                                            {plato.nombre_plato}
+                                          </h4>
+                                        </div>
+                                        {plato.descripcion && (
+                                          <p className="text-xs text-[#8C7A6B] mt-2 leading-relaxed">
+                                            {plato.descripcion}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="text-right ml-4">
+                                        <p className="text-[#4A3B32] font-bold text-lg">
+                                          ${(plato.precio).toFixed(0)}
+                                        </p>
+                                        <p className="text-xs text-[#D4AF37]">
+                                          Score: {(plato.score * 100 + 60).toFixed(0)}%
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Info adicional */}
+                  <div className="mt-8 pt-6 border-t border-[#E8E1D5] flex justify-between text-xs text-[#8C7A6B]">
+                    <div>
+                      <p>Comensales: {comensales.length}</p>
+                      {comensales.length > 0 && (
+                        <p>Acompañantes: {comensales[0].cant_acompanantes}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p>Modelo: {recomendaciones.modelo_version}</p>
+                      <p>Latencia: {recomendaciones.latencia_ms}ms</p>
+                    </div>
                   </div>
                 </section>
-
-                {/* Platos por comensal */}
-                {recomendaciones.recomendaciones_por_comensal.map(c => (
-                  <section key={c.id_persona_en_mesa} className="bg-white border border-[#E8E1D5] p-6">
-                    <h2 className="font-serif text-[#4A3B32] mb-4">Comensal {c.id_persona_en_mesa}</h2>
-                    <div className="grid grid-cols-2 gap-3">
-                      {(["entrada", "principal", "postre", "bebida"] as const).map(curso => (
-                        <div key={curso}>
-                          <h3 className="text-xs uppercase text-[#8C7A6B] font-semibold mb-2 tracking-widest">{curso}</h3>
-                          {c[curso].slice(0, 1).map(p => (
-                            <div key={p.id_plato} className="text-sm border border-[#E8E1D5] p-2 rounded-sm">
-                              <span className="text-[#4A3B32]">Plato #{p.id_plato}</span>
-                              <span className="text-xs text-[#8C7A6B] ml-2">{(p.score * 100).toFixed(0)}%</span>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </>
-            )}
-          </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
