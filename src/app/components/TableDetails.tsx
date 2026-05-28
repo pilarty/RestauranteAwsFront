@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
-import { ArrowLeft, Users, Sparkles } from "lucide-react";
+import { ArrowLeft, Users, Sparkles, Loader2 } from "lucide-react";
 import { base_url } from "../../api";
 
 type Recomendaciones = {
@@ -20,7 +20,33 @@ export function TableDetails() {
   const location = useLocation();
   const reserva = location.state?.reserva;
 
-  const [recomendaciones] = useState<Recomendaciones | null>(null);
+  const [recomendaciones, setRecomendaciones] = useState<Recomendaciones | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecomendaciones = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const res = await fetch(`${base_url}/v1/mesas/${id}/pedidos`);
+        
+        if (res.ok) {
+          const data = await res.json();
+          setRecomendaciones(data);
+        } else {
+          setRecomendaciones(null);
+        }
+      } catch (err) {
+        console.error("Error al obtener recomendaciones:", err);
+        setRecomendaciones(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecomendaciones();
+  }, [id]);
 
   return (
     <div className="h-full flex flex-col -m-4 md:-m-6 lg:-m-10">
@@ -46,7 +72,14 @@ export function TableDetails() {
       <div className="flex-1 overflow-auto p-6 bg-[#FCFBF8]">
         <div className="max-w-7xl mx-auto space-y-6">
 
-          {!recomendaciones && (
+          {loading && (
+            <div className="bg-white border border-[#E8E1D5] p-12 text-center">
+              <Loader2 className="w-16 h-16 mx-auto mb-4 text-[#D4AF37] animate-spin" />
+              <p className="text-sm text-[#8C7A6B]">Cargando información...</p>
+            </div>
+          )}
+
+          {!loading && !recomendaciones && (
             <div className="bg-white border border-[#E8E1D5] p-12 text-center">
               <Users className="w-16 h-16 mx-auto mb-4 text-[#D4AF37] opacity-30" />
               <h3 className="text-lg font-serif text-[#4A3B32] mb-2">
@@ -58,7 +91,7 @@ export function TableDetails() {
             </div>
           )}
 
-          {recomendaciones && (
+          {!loading && recomendaciones && (
             <>
               {/* Mozos */}
               <section className="bg-white border border-[#E8E1D5] p-6">
