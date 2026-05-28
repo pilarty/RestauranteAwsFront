@@ -41,7 +41,7 @@ export function PaginaQR() {
   const fetchMesa = async () => {
     setIsLoading(true);
     setError("");
-    const url = `${base_url}api/v1/mesas/${idMesa}`;
+    const url = `${base_url}/v1/mesas/${idMesa}`;
     console.log("[fetchMesa] url:", url);
     try {
       const res = await fetch(url);
