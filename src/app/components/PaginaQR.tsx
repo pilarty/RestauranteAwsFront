@@ -79,13 +79,16 @@ export function PaginaQR() {
       franja_horaria: getHorario(),
     };
     try {
-      await fetch(`${base_url}/v1/mesas/${idMesa}/pedidos`, {
+      const res = await fetch(`${base_url}/v1/mesas/${idMesa}/pedidos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      console.log("[handleSubmit] status:", res.status);
+      const data = await res.json();
+      console.log("[handleSubmit] response:", data);
     } catch (err) {
-      console.error("Error guardando datos QR", err);
+      console.error("[handleSubmit] error:", err);
     } finally {
       setIsLoading(false);
       setLastPayload(JSON.stringify(payload, null, 2));
