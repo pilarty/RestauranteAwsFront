@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
+import logoBellavista from "../assets/logoBellavista.png";
 
 export function Layout() {
   const location = useLocation();
@@ -25,7 +26,7 @@ export function Layout() {
         {/* Cabecera del Sidebar con tu nueva imagen */}
         <div className="h-20 flex items-center justify-center md:justify-start md:px-6 border-b border-[#E8E1D5] gap-3">
           <img 
-            src="/src/app/assets/logoBellavista.png" 
+            src={logoBellavista} 
             alt="BellaVista Logo"
             className="h-18 w-auto object-contain max-w-full md:max-w-[200px]" 
           />
