@@ -287,7 +287,7 @@ export function TableDetails() {
                                       </div>
                                       <div className="text-right ml-4">
                                         <p className="text-[#4A3B32] font-bold text-lg">
-                                          ${(plato.precio / 100).toFixed(0)}
+                                          ${(plato.precio).toFixed(0)}
                                         </p>
                                         <p className="text-xs text-[#D4AF37]">
                                           Score: {(plato.score * 100 + 60).toFixed(0)}%
