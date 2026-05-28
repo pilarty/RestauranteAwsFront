@@ -4,13 +4,13 @@ import { ArrowLeft, Users, Sparkles, Loader2 } from "lucide-react";
 import { base_url } from "../../api";
 
 type Recomendaciones = {
-  mozos_recomendados: { id_mozo: number; propina_rate_esperado: number; rank: number }[];
-  recomendaciones_por_comensal: {
+  mozos_recomendados?: { id_mozo: number; propina_rate_esperado: number; rank: number }[];
+  recomendaciones_por_comensal?: {
     id_persona_en_mesa: number;
-    entrada: { id_plato: number; score: number; rank: number }[];
-    principal: { id_plato: number; score: number; rank: number }[];
-    postre: { id_plato: number; score: number; rank: number }[];
-    bebida: { id_plato: number; score: number; rank: number }[];
+    entrada?: { id_plato: number; score: number; rank: number }[];
+    principal?: { id_plato: number; score: number; rank: number }[];
+    postre?: { id_plato: number; score: number; rank: number }[];
+    bebida?: { id_plato: number; score: number; rank: number }[];
   }[];
 };
 
@@ -40,7 +40,16 @@ export function TableDetails() {
         
         if (res.ok) {
           const data = await res.json();
-          setRecomendaciones(data);
+          // Verificar que el objeto tenga al menos alguna propiedad con datos
+          if (data && (
+            (data.mozos_recomendados && data.mozos_recomendados.length > 0) ||
+            (data.recomendaciones_por_comensal && data.recomendaciones_por_comensal.length > 0)
+          )) {
+            setRecomendaciones(data);
+          } else {
+            // Respuesta vacía o sin datos útiles
+            setRecomendaciones(null);
+          }
         } else if (res.status === 404) {
           // No hay recomendaciones para esta mesa (normal)
           setRecomendaciones(null);
@@ -130,37 +139,46 @@ export function TableDetails() {
           {!loading && !error && recomendaciones && (
             <>
               {/* Mozos */}
-              <section className="bg-white border border-[#E8E1D5] p-6">
-                <h2 className="flex items-center gap-2 mb-4 font-serif text-[#4A3B32]">
-                  <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-                  Mozo recomendado
-                </h2>
-                <div className="space-y-2">
-                  {recomendaciones.mozos_recomendados.map(m => (
-                    <div key={m.id_mozo} className="flex justify-between items-center text-sm border border-[#E8E1D5] p-3 rounded-sm">
-                      <span className="text-[#4A3B32] font-medium">Mozo #{m.id_mozo}</span>
-                      <span className="text-xs text-[#8C7A6B]">
-                        Propina esperada: {(m.propina_rate_esperado * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {recomendaciones.mozos_recomendados && recomendaciones.mozos_recomendados.length > 0 && (
+                <section className="bg-white border border-[#E8E1D5] p-6">
+                  <h2 className="flex items-center gap-2 mb-4 font-serif text-[#4A3B32]">
+                    <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+                    Mozo recomendado
+                  </h2>
+                  <div className="space-y-2">
+                    {recomendaciones.mozos_recomendados.map(m => (
+                      <div key={m.id_mozo} className="flex justify-between items-center text-sm border border-[#E8E1D5] p-3 rounded-sm">
+                        <span className="text-[#4A3B32] font-medium">Mozo #{m.id_mozo}</span>
+                        <span className="text-xs text-[#8C7A6B]">
+                          Propina esperada: {(m.propina_rate_esperado * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {/* Platos por comensal */}
-              {recomendaciones.recomendaciones_por_comensal.map(c => (
+              {recomendaciones.recomendaciones_por_comensal && recomendaciones.recomendaciones_por_comensal.length > 0 && 
+                recomendaciones.recomendaciones_por_comensal.map(c => (
                 <section key={c.id_persona_en_mesa} className="bg-white border border-[#E8E1D5] p-6">
                   <h2 className="font-serif text-[#4A3B32] mb-4">Comensal {c.id_persona_en_mesa}</h2>
                   <div className="grid grid-cols-2 gap-3">
                     {(["entrada", "principal", "postre", "bebida"] as const).map(curso => (
                       <div key={curso}>
                         <h3 className="text-xs uppercase text-[#8C7A6B] font-semibold mb-2 tracking-widest">{curso}</h3>
-                        {c[curso].slice(0, 1).map(p => (
-                          <div key={p.id_plato} className="text-sm border border-[#E8E1D5] p-2 rounded-sm">
-                            <span className="text-[#4A3B32]">Plato #{p.id_plato}</span>
-                            <span className="text-xs text-[#8C7A6B] ml-2">{(p.score * 100).toFixed(0)}%</span>
+                        {c[curso] && Array.isArray(c[curso]) && c[curso].length > 0 ? (
+                          c[curso].slice(0, 1).map(p => (
+                            <div key={p.id_plato} className="text-sm border border-[#E8E1D5] p-2 rounded-sm">
+                              <span className="text-[#4A3B32]">Plato #{p.id_plato}</span>
+                              <span className="text-xs text-[#8C7A6B] ml-2">{(p.score * 100).toFixed(0)}%</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm border border-[#E8E1D5] p-2 rounded-sm text-[#8C7A6B] text-center">
+                            Sin recomendación
                           </div>
-                        ))}
+                        )}
                       </div>
                     ))}
                   </div>
