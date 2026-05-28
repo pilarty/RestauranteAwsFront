@@ -79,7 +79,7 @@ export function PaginaQR() {
       franja_horaria: getHorario(),
     };
     try {
-      await fetch(`${base_url}api/v1/mesas/${idMesa}/pedidos`, {
+      await fetch(`${base_url}/v1/mesas/${idMesa}/pedidos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
