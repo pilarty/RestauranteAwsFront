@@ -271,11 +271,7 @@ export function PaginaQR() {
               <p className="text-sm text-[#8C7A6B] mt-2">
                 Tus datos fueron registrados correctamente. ¡Buen provecho!
               </p>
-              {lastPayload && (
-                <pre className="mt-4 text-left text-xs bg-[#F5F0E8] border border-[#E8E1D5] rounded-sm p-3 overflow-auto text-[#8C7A6B]">
-                  {lastPayload}
-                </pre>
-              )}
+              
             </div>
           )}
         </div>
