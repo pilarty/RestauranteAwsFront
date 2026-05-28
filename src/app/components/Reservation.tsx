@@ -61,6 +61,7 @@ export function Reservation() {
         email: formData.email,
         telefono: formData.phone,
       };
+      console.log(JSON.stringify(payload));
 
       const res = await fetch(`${base_url}/v1/reservas`, {
         method: "POST",
@@ -69,6 +70,8 @@ export function Reservation() {
       });
 
       if (!res.ok) throw new Error("Error al crear la reserva");
+
+      console.log("Reserva creada exitosamente:", payload);
 
       setStep(4);
     } catch (err) {
