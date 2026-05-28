@@ -395,6 +395,11 @@ export function PaginaQR() {
     return Number.isNaN(number) ? undefined : number;
   };
 
+  const toOptionalPercentRate = (value: string) => {
+    const number = toOptionalNumber(value);
+    return number === undefined ? undefined : number / 100;
+  };
+
   const toOptionalBoolean = (value: string) => {
     if (value === "") return undefined;
     return value === "true";
@@ -416,7 +421,7 @@ export function PaginaQR() {
       hora_entrega_plato: feedbackForm.horaEntregaPlato || undefined,
       hora_retiro_plato: feedbackForm.horaRetiroPlato || undefined,
       monto_propina: toOptionalNumber(feedbackForm.montoPropina),
-      propina_rate: toOptionalNumber(feedbackForm.propinaRate),
+      propina_rate: toOptionalPercentRate(feedbackForm.propinaRate),
       like_mozo: toOptionalBoolean(feedbackForm.likeMozo),
       like_entrada: toOptionalBoolean(feedbackForm.likeEntrada),
       like_principal: toOptionalBoolean(feedbackForm.likePrincipal),
@@ -841,12 +846,6 @@ export function PaginaQR() {
                       </p>
                       <p className="text-xs text-[#8C7A6B]">ID: {mozoRecomendado.id_mozo}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-[#D4AF37] font-semibold">
-                        {(mozoRecomendado.propina_rate_esperado * 100).toFixed(1)}%
-                      </p>
-                      <p className="text-xs text-[#8C7A6B]">Rating esperado</p>
-                    </div>
                   </div>
                 ) : (
                   <p className="text-sm text-[#8C7A6B] mt-2">
@@ -881,7 +880,7 @@ export function PaginaQR() {
                   type="number"
                   min={0}
                   step="0.01"
-                  placeholder="Rate de propina (ej: 0.12)"
+                  placeholder="Porcentaje de propina (ej: 20)"
                   value={feedbackForm.propinaRate}
                   onChange={(e) => updateFeedbackField("propinaRate", e.target.value)}
                   className={inputClass}
