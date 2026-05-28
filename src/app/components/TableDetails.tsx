@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router";
-import { ArrowLeft, Users, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { base_url } from "../../api";
 
 type Plato = {
@@ -125,12 +125,7 @@ export function TableDetails() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs text-[#8C7A6B]">
-            <Users className="w-4 h-4" />
-            {reserva?.cantidad_personas ?? "?"} personas
-          </div>
-          <button
+        <button
             onClick={handleGenerarPedido}
             disabled={generatingOrder}
             className="bg-[#D4AF37] hover:bg-[#C5A028] disabled:opacity-50 text-white px-6 py-2 rounded-sm font-semibold text-xs uppercase tracking-widest transition-colors flex items-center gap-2"
@@ -147,7 +142,6 @@ export function TableDetails() {
               </>
             )}
           </button>
-        </div>
       </header>
 
       <div className="flex-1 overflow-auto p-6 bg-[#FCFBF8]">
@@ -232,8 +226,8 @@ export function TableDetails() {
                   <h2 className="font-serif text-xl text-[#4A3B32] mb-6">Recomendaciones de Menú</h2>
                   
                   {(() => {
-                    // Calcular cantidad de platos a mostrar basado en cantidad de comensales
-                    const cantidadPlatos = recomendaciones.recomendaciones_por_comensal.length;
+                    // Siempre mostrar las 3 mejores opciones por tipo de plato
+                    const cantidadPlatos = 3;
 
                     // Obtener todas las recomendaciones del primer comensal
                     const recComensal = recomendaciones.recomendaciones_por_comensal[0];
@@ -246,11 +240,8 @@ export function TableDetails() {
 
                           return (
                             <div key={curso}>
-                              <h3 className="text-sm uppercase text-[#D4AF37] font-bold mb-4 tracking-[0.3em] flex items-center gap-2">
+                              <h3 className="text-sm uppercase text-[#D4AF37] font-bold mb-4 tracking-[0.3em]">
                                 {curso}
-                                <span className="text-[#8C7A6B] text-xs normal-case tracking-normal font-normal">
-                                  ({cantidadPlatos} {cantidadPlatos === 1 ? 'opción' : 'opciones'})
-                                </span>
                               </h3>
                               <div className="grid gap-4">
                                 {platos.slice(0, cantidadPlatos).map((plato, idx) => (
