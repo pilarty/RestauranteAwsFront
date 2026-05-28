@@ -81,7 +81,7 @@ export function Reservations() {
       );
 
       // 6. Navegar a la mesa
-      navigate(`/table/${mesaTarget.id_mesa}`, { state: { reserva } });
+      navigate("/");
 
     } catch (err) {
       console.error("Error en marcarLlegada:", err);
