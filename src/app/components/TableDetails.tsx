@@ -22,6 +22,7 @@ export function TableDetails() {
 
   const [recomendaciones, setRecomendaciones] = useState<Recomendaciones | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRecomendaciones = async () => {
@@ -29,16 +30,33 @@ export function TableDetails() {
       
       try {
         setLoading(true);
-        const res = await fetch(`${base_url}/v1/mesas/${id}/pedidos`);
+        setError(null);
+        const res = await fetch(`${base_url}/v1/mesas/${id}/pedidos`, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
         
         if (res.ok) {
           const data = await res.json();
           setRecomendaciones(data);
-        } else {
+        } else if (res.status === 404) {
+          // No hay recomendaciones para esta mesa (normal)
           setRecomendaciones(null);
+        } else {
+          // Error del servidor
+          const errorText = await res.text();
+          setError(`Error ${res.status}: ${errorText || res.statusText}`);
         }
       } catch (err) {
         console.error("Error al obtener recomendaciones:", err);
+        // Error de red (CORS, conexión, etc.)
+        if (err instanceof TypeError) {
+          setError("Error de conexión: verifica que el backend esté disponible");
+        } else {
+          setError(err instanceof Error ? err.message : "Error desconocido");
+        }
         setRecomendaciones(null);
       } finally {
         setLoading(false);
@@ -79,7 +97,25 @@ export function TableDetails() {
             </div>
           )}
 
-          {!loading && !recomendaciones && (
+          {!loading && error && (
+            <div className="bg-red-50 border border-red-200 p-12 text-center rounded-lg">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                <span className="text-3xl">⚠️</span>
+              </div>
+              <h3 className="text-lg font-serif text-red-900 mb-2">
+                Error de conexión
+              </h3>
+              <p className="text-sm text-red-700 mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs uppercase font-semibold rounded"
+              >
+                Reintentar
+              </button>
+            </div>
+          )}
+
+          {!loading && !error && !recomendaciones && (
             <div className="bg-white border border-[#E8E1D5] p-12 text-center">
               <Users className="w-16 h-16 mx-auto mb-4 text-[#D4AF37] opacity-30" />
               <h3 className="text-lg font-serif text-[#4A3B32] mb-2">
@@ -91,7 +127,7 @@ export function TableDetails() {
             </div>
           )}
 
-          {!loading && recomendaciones && (
+          {!loading && !error && recomendaciones && (
             <>
               {/* Mozos */}
               <section className="bg-white border border-[#E8E1D5] p-6">
